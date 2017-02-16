@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "noImplicitAny": false,
+        "sourceMap": false,
+        "jsx": "react",
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "outDir": "app",
+        "allowJs": true
+    },
+    "include": [
+        "typescript"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

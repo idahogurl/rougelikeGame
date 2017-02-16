@@ -1,0 +1,58 @@
+{
+  "version": "0.1.0",
+  "windows": {
+    "command": "cmd",
+    "args": [
+      "/C"
+    ],
+    "isShellCommand": true
+  },
+  "linux": {
+    "command": "sh",
+    "args": [
+      "-c"
+    ],
+    "isShellCommand": true
+  },
+  "osx": {
+    "command": "sh",
+    "args": [
+      "-c"
+    ],
+    "isShellCommand": true
+  },
+  "tasks": [
+    {
+      "taskName": "build",
+      "suppressTaskName": true,
+      "args": [
+        "dotnet build"
+      ],
+      "isBuildCommand": true,
+      "showOutput": "always",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "taskName": "restore",
+      "suppressTaskName": true,
+      "args": [
+        "dotnet restore"
+      ]
+    },
+    {
+      "taskName": "npm install",
+      "suppressTaskName": true,
+      "args": [
+        "npm install"
+      ]
+    },
+    {
+      "taskName": "compile typescript",
+      "suppressTaskName": true,
+      "args": [
+        "tsc -w -p ."
+      ],
+      "isBuildCommand": true
+    }
+  ]
+}
