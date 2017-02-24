@@ -1,185 +1,237 @@
 /*
-User Story: When I first arrive at the game, it will randomly generate a board and start playing.
+//http://pcg.wikidot.com/
+//http://donjon.bin.sh/code/dungeon/
+//http://gamedev.stackexchange.com/questions/2663/what-are-some-ideal-algorithms-for-rogue-like-2d-dungeon-generation
+//http://www.roguebasin.com/index.php?title=Dungeon-Building_Algorithm
+//http://bigbadwofl.me/random-dungeon-generator/
 
-User Story: I can start and stop the board.
 
-User Story: I can set up the board.
+//http://ondras.github.io/rot.js/manual/#map/dungeon
+//https://www.npmjs.com/package/dungeon-factory
 
-User Story: I can clear the board.
+User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
 
-User Story: When I press start, the game will play out.
+User Story: All the items and enemies on the map are arranged at random.
 
-User Story: Each time the board changes, I can see how many generations have gone by.
+User Story: I can move throughout a map, discovering items.
 
-Hint: Here's an explanation of Conway's Game of Life from John Conway himself: https://www.youtube.com/watch?v=E8kUJL04ELA
+User Story: I can move anywhere within the map's boundaries, but I can't move through an enemy until I've beaten it.
 
-Hint: Here's an overview of Conway's Game of Life with rules for your reference: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+User Story: Much of the map is hidden. When I take a step, all spaces that are within a certain number of spaces from me are revealed.
 
-Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
-Any live cell with two or three live neighbours lives on to the next generation.
-Any live cell with more than three live neighbours dies, as if by overpopulation.
-Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+User Story: When I beat an enemy, the enemy goes away and I get XP, which eventually increases my level.
+
+User Story: When I fight an enemy, we take turns damaging each other until one of us loses. I do damage based off of my level and my weapon. The enemy does damage based off of its level. Damage is somewhat random within a range.
+
+User Story: When I find and beat the boss, I win.
+
+User Story: The game should be challenging, but theoretically winnable.
 */
 "use strict";
-const React = require('react');
-const ReactDOM = require('react-dom');
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var React = require('react');
+var ReactDOM = require('react-dom');
 require('./sass/styles.scss');
-const react_1 = require("react");
-class BoardCell extends react_1.Component {
-    render() {
-        let status = this.props.val === "A" ? "alive" : this.props.val === "D" ? "dead" : "edge";
-        return React.createElement("div", { className: "board-cell " + status }, "\u00A0");
+var dungeon_1 = require("./dungeon");
+var react_1 = require("react");
+/*
+Name	Damage
+Bat	1d2
+Centaur	1d2/1d5/1d5
+Dragon	1d8/1d8/3d10
+Emu	1d2
+Griffin	4d3/3d5
+Hobgoblin	1d8
+Jabberwock	2d12/2d4
+Kestrel	1d4
+Leprechaun	1d1
+Medusa	3d4/3d4/2d5
+Orc	1d8
+Phantom	4d4
+Quagga	1d5/1d5
+Rattlesnake	1d6
+Snake	1d3
+Troll	1d8/1d8/2d6
+Ur-vile	1d9/1d9/2d9
+Vampire	1d10
+Wraith	1d6
+Xeroc	4d4
+Yeti	1d6/1d6
+Zombie	1d8
+    
+    
+    
+    
+start with dagger
+weapon	total damage
+Crossbow 	16
+Dart 	15.0
+ElvenDagger 	12.5
+ElvenShort+ElvenBroad 	12.5
+OrcishDagger 	10
+Dagger 	11.25
+ElvenDagger+ElvenBroad 	11
+ElvenShortx2 	11
+Katana x2 	11
+Crossbow 	10.5
+DwarfShortx2 	10
+Dart 	9.75
+ElvenDagger+LongSword 	9.5
+LongSword x2 	9
+Dagger 	7
+Crossbow 	6
+Broadsword 	6
+Dart 	5.5
+Longsword 	5.5
+Halberd 	5.5
+Spetum 	4.5
+Dagger(wielded) 	4.5
+Dagger 	3.75
+*/
+/*
+Potions
+Heals 8d4
+*/
+/*
+You start at level 1 and can reach a maximum level of 30.
+1	0	0	0
+2	20	40	20
+3	40	80	50
+4	80	160	100
+5	160	320	200
+6	320	640	400
+7	640	1280	800
+8	1280	2560	1600
+9	2560	5120	3200
+10	5120	10000	6400
+11	10000	20000	10000
+12	20000	40000	14000
+13	40000	80000	19000
+14	80000	150000	25000
+15	160000	250000	32000
+16	320000	300000	41000
+17	640000	350000	52000
+18	1280000	400000	65000
+19	2560000	450000	80000
+20	5120000	500000	97000
+21	10000000	550000	117000
+22	20000000	600000	140000
+23	30000000	650000	166000
+24	40000000	700000	195000
+25	50000000	750000	227000
+26	60000000	800000	263000
+27	70000000	850000	303000
+28	80000000	900000	347000
+29	90000000	950000	395000
+30	100000000	1000000
+*/
+var Character = (function () {
+    function Character(hp, weapon, xp) {
+        this.hp = hp;
+        this.weapon = weapon;
+        this.xp = xp;
     }
-    shouldComponentUpdate(nextProps, nextState) {
-        return this.props.val != nextProps.val;
+    Character.prototype.attack = function (opponent) {
+        opponent.hp -= this.weapon.damage;
+        this.hp -= opponent.weapon.damage;
+    };
+    Character.prototype.move = function () {
+        //keycodes are:
+        // left = 37
+        // up = 38
+        // right = 39
+        // down = 40
+    };
+    return Character;
+}());
+var HealthPotion = (function () {
+    function HealthPotion() {
     }
-}
-class BoardRow extends react_1.Component {
-    render() {
-        let j = 1;
-        let cells = this.props.cells.map(cell => {
-            j++;
-            return React.createElement(BoardCell, { key: this.props.rowNumber + "_" + j, val: cell });
-        });
-        return (React.createElement("div", { className: "board-row" }, cells));
+    return HealthPotion;
+}());
+var Weapon = (function () {
+    function Weapon(name, damage) {
+        this.name = name;
+        this.damage = damage;
     }
-}
-class GameBoard extends react_1.Component {
-    render() {
-        let i = 1;
-        let rows = this.props.board.map(row => {
+    return Weapon;
+}());
+var DungeonGame = (function (_super) {
+    __extends(DungeonGame, _super);
+    function DungeonGame() {
+        var _this = _super.call(this) || this;
+        _this.player = new Character(100, new Weapon("hands", 4), 0);
+        _this.createDungeon();
+        return _this;
+    }
+    DungeonGame.prototype.engage = function (e) {
+        //who are you engaging?
+        //player.attack(dungeon.rooms[0].enemies[0]);
+    };
+    DungeonGame.prototype.createDungeon = function () {
+        // Add the up and down staircases at random points in map
+        // Finally, sprinkle some monsters and items liberally over dungeo
+        this.dungeon = new dungeon_1.DungeonMapGenerator();
+    };
+    DungeonGame.prototype.render = function () {
+        ;
+        return (React.createElement("div", null,
+            React.createElement(Dungeon, { mapArea: this.dungeon.mapData })));
+    };
+    return DungeonGame;
+}(react_1.Component));
+var Dungeon = (function (_super) {
+    __extends(Dungeon, _super);
+    function Dungeon() {
+        return _super.apply(this, arguments) || this;
+    }
+    Dungeon.prototype.render = function () {
+        var i = 0;
+        var rows = this.props.mapArea.map(function (row) {
             i++;
-            return React.createElement(BoardRow, { key: i, rowNumber: i, cells: row });
+            return React.createElement(MapRow, { key: i, rowNumber: i, cells: row });
         });
         return (React.createElement("div", null, rows));
+    };
+    return Dungeon;
+}(react_1.Component));
+var MapCell = (function (_super) {
+    __extends(MapCell, _super);
+    function MapCell() {
+        return _super.apply(this, arguments) || this;
     }
-}
-class GameControlButton extends react_1.Component {
-    render() {
-        return React.createElement("button", { onClick: this.props.onClick, id: this.props.text.toLowerCase() }, this.props.text);
+    //is it a person, weapon, health item or enemy
+    MapCell.prototype.render = function () {
+        var status = this.props.val === dungeon_1.MapStructure.floor ? " floor" :
+            this.props.val === dungeon_1.MapStructure.wall ? " wall" :
+                this.props.val === dungeon_1.MapStructure.door ? " door" :
+                    this.props.val === dungeon_1.MapStructure.corridor ? " corridor" :
+                        "";
+        return React.createElement("div", { className: "board-cell" + status }, this.props.cellInfo);
+    };
+    MapCell.prototype.shouldComponentUpdate = function (nextProps, nextState) {
+        return this.props.val != nextProps.val;
+    };
+    return MapCell;
+}(react_1.Component));
+var MapRow = (function (_super) {
+    __extends(MapRow, _super);
+    function MapRow() {
+        return _super.apply(this, arguments) || this;
     }
-}
-class GameOfLife extends react_1.Component {
-    constructor() {
-        super();
-        this.height = 30;
-        this.width = 50;
-        this.height += 2; //add 2 for edge cells
-        this.width += 2;
-        this.fps = 15;
-        this.start = this.start.bind(this);
-        this.stop = this.stop.bind(this);
-        this.clear = this.clear.bind(this);
-        this.getNextGeneration = this.getNextGeneration.bind(this);
-        this.draw = this.draw.bind(this);
-    }
-    setupRandomBoard() {
-        debugger;
-        let board = new Array(this.height);
-        for (let row = 0; row < this.height; row++) {
-            board[row] = new Array(this.width);
-            for (let col = 0; col < this.width; col++) {
-                if (row === 0 || row === this.height - 1 || col === 0 || col === this.width - 1) {
-                    board[row][col] = "E";
-                }
-                else {
-                    board[row][col] = Math.round(Math.random()) === 1 ? "A" : "D"; //assign alive and dead cells
-                }
-            }
-        }
-        return board;
-    }
-    getNextGeneration() {
-        //loop through rows
-        //loop through cells
-        debugger;
-        let tempBoard = this.state.board.slice();
-        for (let row = 1; row < tempBoard.length - 1; row++) {
-            for (let col = 1; col < tempBoard[row].length - 1; col++) {
-                let n = 0; //number of live neighbors
-                //if (newBoard[row][col] !== "E") {
-                let neighbors = new Array(8);
-                neighbors[0] = this.isNeighborAlive(row - 1, col - 1, tempBoard); //top left
-                neighbors[1] = this.isNeighborAlive(row - 1, col, tempBoard);
-                neighbors[2] = this.isNeighborAlive(row - 1, col + 1, tempBoard); //top right
-                neighbors[3] = this.isNeighborAlive(row, col + 1, tempBoard); //center right
-                neighbors[4] = this.isNeighborAlive(row + 1, col, tempBoard); //bottom left
-                neighbors[5] = this.isNeighborAlive(row + 1, col, tempBoard); //bottom center
-                neighbors[6] = this.isNeighborAlive(row + 1, col + 1, tempBoard); //bottom right
-                neighbors[7] = this.isNeighborAlive(row, col - 1, tempBoard); //center left
-                let alive = neighbors.filter(i => {
-                    return i === true;
-                });
-                let cell = this.getNewValue(alive.length, tempBoard[row][col]);
-                tempBoard[row][col] = cell;
-            }
-        }
-        this.setState({ board: tempBoard, generationCount: this.state.generationCount + 1 });
-    }
-    getNewValue(length, currentValue) {
-        switch (length) {
-            case 0: //dies
-            case 1:
-                return "D";
-            case 2:
-                return currentValue;
-            case 3:
-                return "A";
-            default:
-                return "D";
-        }
-    }
-    isNeighborAlive(rowIndex, colIndex, board) {
-        return board[rowIndex] !== undefined
-            && board[rowIndex][colIndex] !== undefined
-            && board[rowIndex][colIndex] === "A";
-    }
-    draw() {
-        let self = this;
-        setTimeout(function () {
-            requestAnimationFrame(self.getNextGeneration);
-            // Drawing code goes here
-        }, 1000 / this.fps);
-    }
-    componentDidUpdate() {
-        if (this.state.running) {
-            this.draw();
-        }
-    }
-    componentWillMount() {
-        this.state = { board: this.setupRandomBoard(), running: false, generationCount: 0 };
-    }
-    start(e) {
-        e.target.blur();
-        this.setState({ generationCount: 1, running: true });
-    }
-    clear(e) {
-        e.target.blur();
-        this.setState({ board: this.setupRandomBoard(), generationCount: 0, running: false });
-    }
-    stop(e) {
-        e.target.blur();
-        cancelAnimationFrame(this.requestId);
-        this.setState({ running: false });
-    }
-    render() {
-        return (React.createElement("div", null,
-            React.createElement("div", { className: "row no-gutters align-items-center" },
-                React.createElement("div", { className: "col-xs-3" },
-                    React.createElement("h1", null, "Game of Life")),
-                React.createElement("div", { className: "col-xs-9" }, "\u00A0\u00A0by John Conway")),
-            React.createElement("div", { className: "row no-gutters" },
-                React.createElement("div", { className: "col" },
-                    React.createElement(GameBoard, { board: this.state.board }))),
-            React.createElement("div", { id: "controls", className: "row row-eq-height align-items-center no-gutters" },
-                React.createElement("div", { className: "col-xs-6" },
-                    React.createElement(GameControlButton, { onClick: this.start, text: "Start" }),
-                    React.createElement(GameControlButton, { onClick: this.stop, text: "Stop" }),
-                    React.createElement(GameControlButton, { onClick: this.clear, text: "Clear" })),
-                React.createElement("div", { className: "col-xs-6" },
-                    React.createElement("h4", null,
-                        "Generation: ",
-                        this.state.generationCount)))));
-    }
-}
-ReactDOM.render(React.createElement(GameOfLife, null), document.getElementById("gameBoard"));
+    MapRow.prototype.render = function () {
+        var _this = this;
+        var j = 0;
+        var cells = this.props.cells.map(function (cell) {
+            j++;
+            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, val: cell, cellInfo: j + "," + _this.props.rowNumber });
+        });
+        return (React.createElement("div", { className: "board-row" }, cells));
+    };
+    return MapRow;
+}(react_1.Component));
+ReactDOM.render(React.createElement(DungeonGame, null), document.getElementById("map"));

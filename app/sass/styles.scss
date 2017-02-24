@@ -1,0 +1,20 @@
+.board-row {
+    display: table-row;
+    height: 25px;
+}
+
+.board-cell {
+        display: table-cell;
+        height: inherit;
+        width: 25px;
+        border: 1px solid;
+        &.floor {
+            background-color: green; 
+        }
+        &.wall {
+            background-color: black;
+        }
+        &.corridor {
+            background-color: red;
+        }
+    }

@@ -6,6 +6,8 @@
 //http://bigbadwofl.me/random-dungeon-generator/
 
 
+//http://ondras.github.io/rot.js/manual/#map/dungeon
+//https://www.npmjs.com/package/dungeon-factory
 
 User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
 
@@ -31,27 +33,122 @@ const ReactDOM = require('react-dom');
 
 require('./sass/styles.scss');
 
+import {DungeonMapGenerator,MapStructure} from './dungeon';
 import {Component} from 'react';
-
-class Character {
+/*
+Name	Damage
+Bat	1d2
+Centaur	1d2/1d5/1d5
+Dragon	1d8/1d8/3d10
+Emu	1d2
+Griffin	4d3/3d5
+Hobgoblin	1d8
+Jabberwock	2d12/2d4
+Kestrel	1d4
+Leprechaun	1d1
+Medusa	3d4/3d4/2d5
+Orc	1d8
+Phantom	4d4
+Quagga	1d5/1d5
+Rattlesnake	1d6
+Snake	1d3
+Troll	1d8/1d8/2d6
+Ur-vile	1d9/1d9/2d9
+Vampire	1d10
+Wraith	1d6
+Xeroc	4d4
+Yeti	1d6/1d6
+Zombie	1d8
+	
+	
+	
+	
+start with dagger
+weapon	total damage
+Crossbow 	16
+Dart 	15.0 
+ElvenDagger 	12.5
+ElvenShort+ElvenBroad 	12.5
+OrcishDagger 	10
+Dagger 	11.25
+ElvenDagger+ElvenBroad 	11
+ElvenShortx2 	11
+Katana x2 	11
+Crossbow 	10.5
+DwarfShortx2 	10
+Dart 	9.75 
+ElvenDagger+LongSword 	9.5
+LongSword x2 	9
+Dagger 	7
+Crossbow 	6
+Broadsword 	6
+Dart 	5.5
+Longsword 	5.5
+Halberd 	5.5 
+Spetum 	4.5
+Dagger(wielded) 	4.5
+Dagger 	3.75
+*/
+/*
+Potions
+Heals 8d4
+*/
+/*
+You start at level 1 and can reach a maximum level of 30.
+1	0	0	0
+2	20	40	20
+3	40	80	50
+4	80	160	100
+5	160	320	200
+6	320	640	400
+7	640	1280	800
+8	1280	2560	1600
+9	2560	5120	3200
+10	5120	10000	6400
+11	10000	20000	10000
+12	20000	40000	14000
+13	40000	80000	19000
+14	80000	150000	25000
+15	160000	250000	32000
+16	320000	300000	41000
+17	640000	350000	52000
+18	1280000	400000	65000
+19	2560000	450000	80000
+20	5120000	500000	97000
+21	10000000	550000	117000
+22	20000000	600000	140000
+23	30000000	650000	166000
+24	40000000	700000	195000
+25	50000000	750000	227000
+26	60000000	800000	263000
+27	70000000	850000	303000
+28	80000000	900000	347000
+29	90000000	950000	395000
+30	100000000	1000000	
+*/
+class Character 
+{
     hp: number;
     weapon: Weapon;
     xp: number;
-    x_position: number;
-    y_position: number;
-
-    constructor(hp, weapon, xp) {
+    
+    level: number;
+    
+    constructor(hp, weapon, xp) 
+    {
         this.hp = hp;
         this.weapon = weapon;
         this.xp = xp;
     }
 
-    attack(opponent: Character) {
+    attack(opponent: Character) 
+    {
         opponent.hp -= this.weapon.damage;
         this.hp -= opponent.weapon.damage;        
     }
 
-    move() {
+    move() 
+    {
         //keycodes are:
 
         // left = 37
@@ -61,65 +158,58 @@ class Character {
     }
 }
 
-class HealthItem {
+class HealthPotion 
+{
     value: number;
 }
 
-class Weapon {
+class Weapon 
+{
     name: string;
     damage: number;
 
-    constructor(name:string, damage:number){
+    constructor(name:string, damage:number)
+    {
         this.name = name;
         this.damage = damage;
     }
 }
-
-class DungeonGame extends Component<any,any> {   
+class DungeonGame extends Component<any,any> 
+{   
     player: Character;
-    dungeon: Dungeon;
-    constructor() {
+    dungeon: DungeonMapGenerator;
+    
+    constructor() 
+    {
         super();
+        
         this.player = new Character(100, new Weapon("hands", 4), 0);
-        this.dungeon = new Dungeon();
+        this.createDungeon();
     }
     engage(e) {
         //who are you engaging?
-        //this.player.attack(this.dungeon.rooms[0].enemies[0]);
+        //player.attack(dungeon.rooms[0].enemies[0]);
+    }    
+    createDungeon() 
+    {  
+    // Add the up and down staircases at random points in map
+    // Finally, sprinkle some monsters and items liberally over dungeo
+        this.dungeon = new DungeonMapGenerator();
     }
-
     render() {
+        ;
         return (
             <div>
-            <Dungeon/>
+            <Dungeon mapArea={this.dungeon.mapData}/>
             </div>
         );
     }
 }
 
 class Dungeon extends Component<any,any> {
-    width: 10;
-    height: 10;
-    
-    map: number[][];
-
-    generateMap() {  
-        this.map = new Array(this.height);
-        for (let row = 0; row < this.height; row++) {
-            this.map[row] = new Array(this.width);
-            for (let col = 0; col < this.width; col++) {
-                this.map[row][col] = 1;
-            }
-        }
-    }
-
-    placeEnemiesAndItems(){
-
-    }
-
     render() {        
-        let i = 1;
-        let rows = this.props.board.map(row => 
+        let i = 0;
+        let rows = this.props.mapArea.map(row => 
             { 
                i++;
               
@@ -137,8 +227,14 @@ class MapCell extends Component<any,any> {
     
     //is it a person, weapon, health item or enemy
     render() {
-        let status = this.props.val === "A" ? "alive" : this.props.val === "D" ? "dead" : "edge";
-        return <div className={"board-cell " + status}>&nbsp;</div>
+        
+        let status = this.props.val === MapStructure.floor ? " floor" : 
+            this.props.val === MapStructure.wall ? " wall" :
+            this.props.val === MapStructure.door ? " door" :
+            this.props.val === MapStructure.corridor ? " corridor" :
+             "";
+        
+        return <div className={"board-cell" + status}>{this.props.cellInfo}</div>
     }
     shouldComponentUpdate(nextProps, nextState) {
         return this.props.val != nextProps.val;
@@ -147,11 +243,11 @@ class MapCell extends Component<any,any> {
 
 class MapRow extends Component<any,any> {
     render() {
-        let j: number = 1;
+        let j: number = 0;
         
         let cells = this.props.cells.map(cell =>  { 
             j++;
-            return <MapCell key={this.props.rowNumber + "_" + j} val={cell}/>; 
+            return <MapCell key={this.props.rowNumber + "_" + j} val={cell} cellInfo={j + "," + this.props.rowNumber}/>; 
         });
         return (
             <div className="board-row">
@@ -160,5 +256,4 @@ class MapRow extends Component<any,any> {
         );
     }
 }
-
 ReactDOM.render(<DungeonGame/>, document.getElementById("map"));

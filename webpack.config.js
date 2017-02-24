@@ -5,10 +5,18 @@ var HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
   filename: 'index.html',
   inject: 'body'
 });
-module.exports = {
-  entry: [
-    './app/index.js'
-  ],
+
+var ParallelUglifyPlugin = require('webpack-parallel-uglify-plugin');
+var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
+     uglifyJS: {
+        // These pass straight through to uglify. 
+      },
+    })
+
+ module.exports = {
+  entry: {
+    entry: ['./app/index.js','./app/dungeon.js']
+  },
   module: {
     loaders: [
             {
@@ -16,7 +24,7 @@ module.exports = {
                 loaders: [ 'style-loader', 'css-loader', 'sass-loader' ]
             },
             {
-              test: /\.tsx$/, 
+              test: /\.tsx|.\ts$/, 
               include: __dirname + '/typescript', 
               exclude: /node_modules/, 
               loader: "typescript-loader"
@@ -27,5 +35,5 @@ module.exports = {
     filename: "index_bundle.js",
     path: __dirname + '/dist'
   },
-  plugins: [HTMLWebpackPluginConfig]
+  plugins: [HTMLWebpackPluginConfig,ParallelUglifyPluginConfig]
 }
