@@ -1,6 +1,11 @@
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 //Source: https://gamedevelopment.tutsplus.com/tutorials/how-to-use-bsp-trees-to-generate-game-maps--gamedev-12268
 //Converted from ActionScript 3 to TypeScript
-"use strict";
 var Rectangle = (function () {
     function Rectangle(x, y, width, height) {
         this.x = x;
@@ -26,18 +31,91 @@ var Rectangle = (function () {
     };
     return Rectangle;
 }());
-var MapStructure = (function () {
-    function MapStructure() {
+var Room = (function (_super) {
+    __extends(Room, _super);
+    function Room() {
+        return _super.apply(this, arguments) || this;
     }
-    return MapStructure;
+    Room.prototype.addMonster = function () {
+        if (Math.random() < 0.5) {
+            this.monster = MonsterFactory.random();
+        }
+    };
+    Room.prototype.addHealthPotion = function () {
+        if (Math.random() < 0.5) {
+            this.healthPotion = new HealthPotion();
+        }
+    };
+    Room.prototype.addWeapon = function () {
+        if (Math.random() < 0.25) {
+            this.weapon = WeaponFactory.random();
+        }
+    };
+    return Room;
+}(Rectangle));
+var WeaponFactory = (function () {
+    function WeaponFactory() {
+    }
+    WeaponFactory.random = function () {
+        var weapons = [
+            new Weapon("2d4", "Mace"),
+            new Weapon("3d4", "Long sword"),
+            new Weapon("1d6", "Dagger"),
+            new Weapon("4d4", "Two handed sword"),
+            new Weapon("2d3", "Spear")
+        ];
+        return weapons[Random.next(0, weapons.length - 1)];
+    };
+    return WeaponFactory;
 }());
-MapStructure.empty = "";
-MapStructure.floor = "_";
-MapStructure.wall = "|";
-MapStructure.corridor = "#";
-MapStructure.stairs = "S";
-MapStructure.door = "D";
-exports.MapStructure = MapStructure;
+var MonsterFactory = (function () {
+    function MonsterFactory() {
+    }
+    MonsterFactory.random = function () {
+        var monsters = [
+            new Monster("Bat", 1, 1, "1d8", "1d2"),
+            new Monster("Centaur", 25, 4, "4d8", "1d2/1d5/1d5"),
+            new Monster("Dragon", 6800, 10, "10d8", "1d8/1d8/3d10"),
+            new Monster("Emu", 2, 1, "1d8", "1d2"),
+            new Monster("Griffin", 2000, 20, "13d8", "4d3/3d5/4d3"),
+            new Monster("Hobgoblin", 3, 1, "1d8", "1d8"),
+            new Monster("Jabberwock", 3000, 15, "15d8", "2d12/2d4"),
+            new Monster("Kestral", 1, 7, "1d8", "1d4"),
+            new Monster("Leprechaun", 10, 3, "3d8", "1d2"),
+            new Monster("Medusa", 200, 8, "8d8", "3d4/3d4/2d5"),
+            new Monster("Orc", 5, 1, "1d8", "1d8"),
+            new Monster("Phantom", 120, 8, "8d8", "4d4"),
+            new Monster("Quagga", 32, 3, "3d8", "1d2/1d2/1d4"),
+            new Monster("Rattlesnake", 9, 2, "2d8", "1d6"),
+            new Monster("Snake", 1, 2, "1d8", "1d3"),
+            new Monster("Troll", 120, 6, "6d8", "1d8/1d8/2d6"),
+            new Monster("Ur-vile", 190, 7, "7d8", "1d3/1d3/1d3/4d6"),
+            new Monster("Vampire", 350, 8, "8d8", "1d10"),
+            new Monster("Wraith", 55, 5, "5d8", "1d6"),
+            new Monster("Xeroc", 100, 7, "7d8", "3d4"),
+            new Monster("Yeti", 50, 4, "4d8", "1d6/1d6"),
+            new Monster("Zombie", 6, 2, "2d8", "1d")
+        ];
+        return monsters[Random.next(0, monsters.length - 1)];
+    };
+    return MonsterFactory;
+}());
+var MapTiles = (function () {
+    function MapTiles() {
+    }
+    return MapTiles;
+}());
+MapTiles.empty = "";
+MapTiles.floor = "_";
+MapTiles.wall = "|";
+MapTiles.corridor = "#";
+MapTiles.stairs = "S";
+MapTiles.door = "D";
+MapTiles.health = "H";
+MapTiles.weapon = "W";
+MapTiles.monster = "M";
+MapTiles.player = "P";
+exports.MapTiles = MapTiles;
 var Random = (function () {
     function Random() {
     }
@@ -49,6 +127,7 @@ var Random = (function () {
     };
     return Random;
 }());
+exports.Random = Random;
 var Point = (function () {
     function Point(x, y) {
         this.x = x;
@@ -142,7 +221,10 @@ var Leaf = (function () {
             roomSize = new Point(Random.next(3, this.width - 2), Random.next(3, this.height - 2));
             // place the room within the leaf don't put it right against the side of the leaf (that would merge rooms together)
             roomPos = new Point(Random.next(1, this.width - roomSize.x - 1), Random.next(1, this.height - roomSize.y - 1));
-            this.room = new Rectangle(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);
+            this.room = new Room(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);
+            this.room.addMonster();
+            this.room.addWeapon();
+            this.room.addHealthPotion();
         }
     };
     Leaf.prototype.createHall = function (l, r) {
@@ -227,7 +309,7 @@ var DungeonMapGenerator = (function () {
         for (var row = 0; row < this.height; row++) {
             this.mapData[row] = new Array(this.width);
             for (var col = 0; col < this.width; col++) {
-                this.mapData[row][col] = MapStructure.empty;
+                this.mapData[row][col] = new Tile("Empty", MapTiles.empty);
             }
         }
     };
@@ -236,7 +318,7 @@ var DungeonMapGenerator = (function () {
         // reset our mapData
         this.initialize();
         //player.visible = false;
-        // reset our Vectors
+        // reset our arrays
         this.rooms = new Array();
         this.halls = new Array();
         this.leafs = new Array();
@@ -267,32 +349,62 @@ var DungeonMapGenerator = (function () {
             // then we draw the room and hallway if it exists
             if (l.room !== undefined) {
                 _this.drawRoom(l.room);
+                _this.setRandomRoomTile(l.room, l.room.monster);
+                _this.setRandomRoomTile(l.room, l.room.weapon);
+                _this.setRandomRoomTile(l.room, l.room.healthPotion);
             }
             if (l.halls !== undefined && l.halls.length > 0) {
                 _this.drawHalls(l.halls);
             }
         });
-        // // randomly pick one of the rooms for the player to start in...
-        // let startRoom:Rectangle = rooms[this.randomNumber(0, rooms.length - 1)];
-        // // and pick a random tile in that room for them to start on.
-        // let playerStart:Point = new Point(this.randomNumber(startRoom.x, startRoom.x + startRoom.width - 1), this.randomNumber(startRoom.y, startRoom.y + startRoom.height - 1));
-        // // move the player sprite to the starting location (to get ready for the user to hit 'play')
+        this.player = new Player("Rebecca", 0, 1, new Weapon("1d6", "Dagger"));
+        this.startPlayer();
+        // move the player sprite to the starting location (to get ready for the user to hit 'play')
         // player.x = playerStart.x * 16 + 1;
         // player.y = playerStart.y * 16 + 1;
+        //add staircases, up and down
+        //monsters (pick based on current level, boss is last level)
+    };
+    DungeonMapGenerator.prototype.startPlayer = function () {
+        // randomly pick one of the rooms for the player to start in...
+        var startRoom = this.rooms[Random.next(0, this.rooms.length)];
+        // and pick a random tile in that room for them to start on.			
+        var isSet = false;
+        while (!isSet) {
+            var playerStart = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1), Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
+            if (this.mapData[playerStart.x][playerStart.y].symbol == MapTiles.floor) {
+                this.player.location = playerStart;
+                this.mapData[playerStart.x][playerStart.y] = this.player;
+                isSet = true;
+            }
+        }
+    };
+    DungeonMapGenerator.prototype.setRandomRoomTile = function (room, mapObj) {
+        if (mapObj !== undefined) {
+            var isSet = false;
+            while (!isSet) {
+                var y = Random.next(room.top(), room.bottom());
+                var x = Random.next(room.left(), room.right());
+                if (this.mapData[x][y].symbol === MapTiles.floor) {
+                    this.mapData[x][y] = mapObj;
+                    isSet = true;
+                }
+            }
+        }
     };
     DungeonMapGenerator.prototype.drawHalls = function (h) {
         var _this = this;
-        debugger;
+        //debugger;
         // add each hall to the hall array, and draw the hall onto our mapData
         h.forEach(function (r) {
             _this.halls.push(r);
-            _this.drawRectangle(r, MapStructure.corridor);
+            _this.drawRectangle(r, new Tile("Corridor", MapTiles.corridor));
         });
     };
     DungeonMapGenerator.prototype.drawRoom = function (r) {
         // add this room to the room array, and draw the room onto our mapData
         this.rooms.push(r);
-        this.drawRectangle(r, MapStructure.floor);
+        this.drawRectangle(r, new Tile("Floor", MapTiles.floor));
     };
     DungeonMapGenerator.prototype.drawRectangle = function (r, tile) {
         for (var x = r.x; x < r.left(); x++) {
@@ -304,3 +416,72 @@ var DungeonMapGenerator = (function () {
     return DungeonMapGenerator;
 }());
 exports.DungeonMapGenerator = DungeonMapGenerator;
+var Tile = (function () {
+    function Tile(name, symbol) {
+        this.name = name;
+        this.symbol = symbol;
+    }
+    return Tile;
+}());
+exports.Tile = Tile;
+var Entity = (function () {
+    function Entity(name, xp, level) {
+        this.name = name;
+        this.xp = xp;
+        this.level = level;
+    }
+    return Entity;
+}());
+var Monster = (function (_super) {
+    __extends(Monster, _super);
+    function Monster(name, xp, level, hpRoll, damageRoll) {
+        var _this = _super.call(this, name, xp, level) || this;
+        _this.symbol = MapTiles.monster;
+        _this.hpRoll = hpRoll;
+        _this.damageRoll = damageRoll;
+        return _this;
+    }
+    return Monster;
+}(Entity));
+exports.Monster = Monster;
+var Player = (function (_super) {
+    __extends(Player, _super);
+    function Player(name, xp, level, weapon) {
+        var _this = _super.call(this, name, xp, level) || this;
+        _this.weapon = weapon;
+        _this.symbol = MapTiles.player;
+        _this.hp = 12;
+        return _this;
+    }
+    Player.prototype.addHealth = function (rollValue) {
+        this.hp += 20;
+        //Heals 1df per character level. Increase max HP by 1 if you are at full health.
+    };
+    Player.prototype.attack = function (opponent) {
+        //roll the dice
+        var opponentDamage = 0;
+        var playerDamage = 0;
+        if (opponent.hp === 0)
+            opponent.hpRoll;
+        opponent.hp -= playerDamage;
+        this.hp -= opponentDamage;
+    };
+    return Player;
+}(Entity));
+var HealthPotion = (function () {
+    function HealthPotion() {
+        this.valueRoll = "8d4";
+        this.symbol = MapTiles.health;
+    }
+    return HealthPotion;
+}());
+exports.HealthPotion = HealthPotion;
+var Weapon = (function () {
+    function Weapon(damage, name) {
+        if (name === void 0) { name = null; }
+        this.symbol = MapTiles.weapon;
+        this.name = name;
+    }
+    return Weapon;
+}());
+exports.Weapon = Weapon;

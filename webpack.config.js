@@ -35,5 +35,6 @@ var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
     filename: "index_bundle.js",
     path: __dirname + '/dist'
   },
-  plugins: [HTMLWebpackPluginConfig,ParallelUglifyPluginConfig]
+  //plugins: [HTMLWebpackPluginConfig,ParallelUglifyPluginConfig]
+  plugins: [HTMLWebpackPluginConfig]
 }

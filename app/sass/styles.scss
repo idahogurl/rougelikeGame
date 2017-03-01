@@ -1,20 +1,36 @@
 .board-row {
     display: table-row;
-    height: 25px;
+    height: 15px;
 }
 
 .board-cell {
         display: table-cell;
         height: inherit;
-        width: 25px;
+        width: 15px;
         border: 1px solid;
         &.floor {
-            background-color: green; 
+            background-color: tan; 
         }
         &.wall {
             background-color: black;
         }
         &.corridor {
+            background-color: tan;
+        }
+        &.monster {
             background-color: red;
         }
+        &.weapon {
+            background-color: orange;
+        }
+        &.health{
+            background-color: limegreen;
+        }
+        &.player {
+            background-color: blue;
+        }
+        // &.boss {}
+        // &.stairCaseUp{}
+        // &.stairCaseDown{}
+
     }

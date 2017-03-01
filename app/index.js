@@ -1,14 +1,11 @@
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 /*
-//http://pcg.wikidot.com/
-//http://donjon.bin.sh/code/dungeon/
-//http://gamedev.stackexchange.com/questions/2663/what-are-some-ideal-algorithms-for-rogue-like-2d-dungeon-generation
-//http://www.roguebasin.com/index.php?title=Dungeon-Building_Algorithm
-//http://bigbadwofl.me/random-dungeon-generator/
-
-
-//http://ondras.github.io/rot.js/manual/#map/dungeon
-//https://www.npmjs.com/package/dungeon-factory
-
+//http://www.rots.net/rogue/monsters.html
 User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
 
 User Story: All the items and enemies on the map are arranged at random.
@@ -27,147 +24,144 @@ User Story: When I find and beat the boss, I win.
 
 User Story: The game should be challenging, but theoretically winnable.
 */
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 var React = require('react');
 var ReactDOM = require('react-dom');
 require('./sass/styles.scss');
 var dungeon_1 = require("./dungeon");
 var react_1 = require("react");
 /*
-Name	Damage
-Bat	1d2
-Centaur	1d2/1d5/1d5
-Dragon	1d8/1d8/3d10
-Emu	1d2
-Griffin	4d3/3d5
-Hobgoblin	1d8
-Jabberwock	2d12/2d4
-Kestrel	1d4
-Leprechaun	1d1
-Medusa	3d4/3d4/2d5
-Orc	1d8
-Phantom	4d4
-Quagga	1d5/1d5
-Rattlesnake	1d6
-Snake	1d3
-Troll	1d8/1d8/2d6
-Ur-vile	1d9/1d9/2d9
-Vampire	1d10
-Wraith	1d6
-Xeroc	4d4
-Yeti	1d6/1d6
-Zombie	1d8
-    
-    
-    
-    
-start with dagger
-weapon	total damage
-Crossbow 	16
-Dart 	15.0
-ElvenDagger 	12.5
-ElvenShort+ElvenBroad 	12.5
-OrcishDagger 	10
-Dagger 	11.25
-ElvenDagger+ElvenBroad 	11
-ElvenShortx2 	11
-Katana x2 	11
-Crossbow 	10.5
-DwarfShortx2 	10
-Dart 	9.75
-ElvenDagger+LongSword 	9.5
-LongSword x2 	9
-Dagger 	7
-Crossbow 	6
-Broadsword 	6
-Dart 	5.5
-Longsword 	5.5
-Halberd 	5.5
-Spetum 	4.5
-Dagger(wielded) 	4.5
-Dagger 	3.75
-*/
-/*
-Potions
-Heals 8d4
-*/
-/*
 You start at level 1 and can reach a maximum level of 30.
-1	0	0	0
-2	20	40	20
-3	40	80	50
-4	80	160	100
-5	160	320	200
-6	320	640	400
-7	640	1280	800
-8	1280	2560	1600
-9	2560	5120	3200
-10	5120	10000	6400
-11	10000	20000	10000
-12	20000	40000	14000
-13	40000	80000	19000
-14	80000	150000	25000
-15	160000	250000	32000
-16	320000	300000	41000
-17	640000	350000	52000
-18	1280000	400000	65000
-19	2560000	450000	80000
-20	5120000	500000	97000
-21	10000000	550000	117000
-22	20000000	600000	140000
-23	30000000	650000	166000
-24	40000000	700000	195000
-25	50000000	750000	227000
-26	60000000	800000	263000
-27	70000000	850000	303000
-28	80000000	900000	347000
-29	90000000	950000	395000
-30	100000000	1000000
 */
-var Character = (function () {
-    function Character(hp, weapon, xp) {
-        this.hp = hp;
-        this.weapon = weapon;
-        this.xp = xp;
+var experinceLevels = [
+    0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
+    1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
+];
+// For each strength point below 7 they
+// have, they have -1 to hit and damage. Rogues with a large amount of Strength
+// get and increase to hitting and damage. With a strength of 17 or 18, a Rogue
+// has +1 to hit. With 19 or 20 a Rogue has +2 to hit. From strength 21 to 30 a
+// Rogue has +3 to hit, and the modifiers max out at 31 strength with +4
+var UserInfo = (function (_super) {
+    __extends(UserInfo, _super);
+    function UserInfo() {
+        return _super.apply(this, arguments) || this;
     }
-    Character.prototype.attack = function (opponent) {
-        opponent.hp -= this.weapon.damage;
-        this.hp -= opponent.weapon.damage;
+    UserInfo.prototype.render = function () {
+        return (React.createElement("div", null,
+            React.createElement("div", { className: "row" },
+                React.createElement("div", null, "Level:"),
+                React.createElement("div", null, "Health:"),
+                React.createElement("div", null, "Weapon:")),
+            React.createElement("div", null,
+                React.createElement("div", null, this.props.player.level),
+                React.createElement("div", null, this.props.player.hp),
+                React.createElement("div", null, this.props.player.weapon.name))));
     };
-    Character.prototype.move = function () {
-        //keycodes are:
-        // left = 37
-        // up = 38
-        // right = 39
-        // down = 40
+    return UserInfo;
+}(react_1.Component));
+var Dice = (function () {
+    function Dice() {
+    }
+    Dice.roll = function (value) {
+        var temp = value.split("d");
+        var timesRoll = parseInt(temp[0]);
+        var dieSides = parseInt(temp[1]);
+        var total = 0;
+        for (var i = 0; i = timesRoll; i++) {
+            total += dungeon_1.Random.next(1, dieSides);
+        }
+        return total;
     };
-    return Character;
-}());
-var HealthPotion = (function () {
-    function HealthPotion() {
-    }
-    return HealthPotion;
-}());
-var Weapon = (function () {
-    function Weapon(name, damage) {
-        this.name = name;
-        this.damage = damage;
-    }
-    return Weapon;
+    return Dice;
 }());
 var DungeonGame = (function (_super) {
     __extends(DungeonGame, _super);
     function DungeonGame() {
         var _this = _super.call(this) || this;
-        _this.player = new Character(100, new Weapon("hands", 4), 0);
         _this.createDungeon();
+        _this.move = _this.move.bind(_this);
+        _this.state = { mapData: _this.dungeon.mapData, player: _this.dungeon.player };
         return _this;
     }
+    DungeonGame.prototype.move = function (e) {
+        debugger;
+        //can't move outside of room, won't move until monster is defeated, take when you go over a weapon or health potion
+        var x = this.dungeon.player.location.x;
+        var y = this.dungeon.player.location.y;
+        var newX = x;
+        var newY = y;
+        switch (e.keyCode) {
+            case 37:
+                newY--;
+                break;
+            case 38:
+                newX--;
+                break;
+            case 39:
+                newY++;
+                break;
+            case 40:
+                newX++;
+                break;
+        }
+        if (this.dungeon.mapData[newX][newY].symbol === dungeon_1.MapTiles.monster) {
+            //attack
+            this.dungeon.player.attack(this.dungeon.mapData[newX][newY]);
+            this.setState({ player: this.dungeon.player });
+        }
+        else if (this.dungeon.mapData[newX][newY].symbol !== dungeon_1.MapTiles.empty) {
+            this.dungeon.mapData[x][y] = new dungeon_1.Tile("Floor", dungeon_1.MapTiles.floor);
+            switch (this.dungeon.mapData[newX][newY].symbol) {
+                case dungeon_1.MapTiles.health:
+                    var healthPotion = this.dungeon.mapData[newX][newY];
+                    this.dungeon.player.addHealth(healthPotion.valueRoll);
+                    break;
+                case dungeon_1.MapTiles.weapon:
+                    var weapon = this.dungeon.mapData[newX][newY];
+                    this.dungeon.player.weapon = weapon;
+                    break;
+                case dungeon_1.MapTiles.stairs:
+                    break;
+            }
+            //hit up stairs
+            //hit monster
+            //hit weapon
+            this.dungeon.mapData[x][y] = this.state.player;
+            this.dungeon.player.location.x = newX;
+            this.dungeon.player.location.y = newY;
+            this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });
+        }
+        // 	if (grpTestMap.visible)
+        // 	{
+        // 		// if we're in 'play' mode, arrow keys move the player
+        // 		if (FlxG.keys.LEFT)
+        // 		{
+        // 			player.velocity.x = -100;
+        // 		}
+        // 		else if (FlxG.keys.RIGHT)
+        // 		{
+        // 			player.velocity.x = 100;
+        // 		}
+        // 		else
+        // 		{
+        // 			player.velocity.x = 0;
+        // 		}
+        // 		if (FlxG.keys.UP)
+        // 		{
+        // 			player.velocity.y = -100;
+        // 		}
+        // 		else if (FlxG.keys.DOWN)
+        // 		{
+        // 			player.velocity.y = 100;
+        // 		}
+        // 		else
+        // 		{
+        // 			player.velocity.y = 0;
+        // 		}
+        // 		// check collison with the wall tiles in the map
+        // 		FlxG.collide(player, map);
+        // 	}
+    };
     DungeonGame.prototype.engage = function (e) {
         //who are you engaging?
         //player.attack(dungeon.rooms[0].enemies[0]);
@@ -177,10 +171,18 @@ var DungeonGame = (function (_super) {
         // Finally, sprinkle some monsters and items liberally over dungeo
         this.dungeon = new dungeon_1.DungeonMapGenerator();
     };
+    DungeonGame.prototype.componentWillMount = function () {
+        debugger;
+        window.addEventListener("keydown", this.move);
+    };
+    DungeonGame.prototype.componentWillUnmount = function () {
+        window.removeEventListener("keydown");
+    };
     DungeonGame.prototype.render = function () {
         ;
         return (React.createElement("div", null,
-            React.createElement(Dungeon, { mapArea: this.dungeon.mapData })));
+            React.createElement(UserInfo, { player: this.state.player }),
+            React.createElement(Dungeon, { mapArea: this.state.mapData })));
     };
     return DungeonGame;
 }(react_1.Component));
@@ -206,15 +208,38 @@ var MapCell = (function (_super) {
     }
     //is it a person, weapon, health item or enemy
     MapCell.prototype.render = function () {
-        var status = this.props.val === dungeon_1.MapStructure.floor ? " floor" :
-            this.props.val === dungeon_1.MapStructure.wall ? " wall" :
-                this.props.val === dungeon_1.MapStructure.door ? " door" :
-                    this.props.val === dungeon_1.MapStructure.corridor ? " corridor" :
-                        "";
-        return React.createElement("div", { className: "board-cell" + status }, this.props.cellInfo);
+        var mapTileClass;
+        //debugger;
+        switch (this.props.tile.symbol) {
+            case dungeon_1.MapTiles.floor:
+                mapTileClass = " floor";
+                break;
+            case dungeon_1.MapTiles.monster:
+                mapTileClass = " monster";
+                break;
+            case dungeon_1.MapTiles.corridor:
+                mapTileClass = " corridor";
+                break;
+            case dungeon_1.MapTiles.monster:
+                mapTileClass = " monster";
+                break;
+            case dungeon_1.MapTiles.player:
+                mapTileClass = " player";
+                break;
+            case dungeon_1.MapTiles.weapon:
+                mapTileClass = " weapon";
+                break;
+            case dungeon_1.MapTiles.health:
+                mapTileClass = " health";
+                break;
+            default:
+                mapTileClass = "";
+                break;
+        }
+        return React.createElement("div", { className: "board-cell" + mapTileClass });
     };
     MapCell.prototype.shouldComponentUpdate = function (nextProps, nextState) {
-        return this.props.val != nextProps.val;
+        return this.props.tile != nextProps.tile;
     };
     return MapCell;
 }(react_1.Component));
@@ -228,7 +253,7 @@ var MapRow = (function (_super) {
         var j = 0;
         var cells = this.props.cells.map(function (cell) {
             j++;
-            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, val: cell, cellInfo: j + "," + _this.props.rowNumber });
+            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell, cellInfo: j + "," + _this.props.rowNumber });
         });
         return (React.createElement("div", { className: "board-row" }, cells));
     };
