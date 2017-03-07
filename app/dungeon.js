@@ -46,25 +46,20 @@ var Room = (function (_super) {
             this.healthPotion = new HealthPotion();
         }
     };
-    Room.prototype.addWeapon = function () {
-        if (Math.random() < 0.25) {
-            this.weapon = WeaponFactory.random();
-        }
-    };
     return Room;
 }(Rectangle));
 var WeaponFactory = (function () {
     function WeaponFactory() {
     }
-    WeaponFactory.random = function () {
-        var weapons = [
-            new Weapon("2d4", "Mace"),
-            new Weapon("3d4", "Long sword"),
-            new Weapon("1d6", "Dagger"),
-            new Weapon("4d4", "Two handed sword"),
-            new Weapon("2d3", "Spear")
-        ];
-        return weapons[Random.next(0, weapons.length - 1)];
+    WeaponFactory.get = function (level) {
+        var weapons = {
+            3: new Weapon("2d4", "Mace", 3),
+            4: new Weapon("3d4", "Long sword", 4),
+            1: new Weapon("1d6", "Dagger", 1),
+            5: new Weapon("4d4", "Two handed sword", 5),
+            2: new Weapon("2d3", "Spear", 2)
+        };
+        return weapons[level];
     };
     return WeaponFactory;
 }());
@@ -96,6 +91,8 @@ var MonsterFactory = (function () {
             new Monster("Yeti", 50, 4, "4d8", "1d6/1d6"),
             new Monster("Zombie", 6, 2, "2d8", "1d")
         ];
+        var monster = monsters[Random.next(0, monsters.length - 1)];
+        monster.calcHp();
         return monsters[Random.next(0, monsters.length - 1)];
     };
     return MonsterFactory;
@@ -116,6 +113,22 @@ MapTiles.weapon = "W";
 MapTiles.monster = "M";
 MapTiles.player = "P";
 exports.MapTiles = MapTiles;
+var Dice = (function () {
+    function Dice() {
+    }
+    Dice.roll = function (value) {
+        var temp = value.split("d");
+        debugger;
+        var timesRoll = parseInt(temp[0]);
+        var dieSides = parseInt(temp[1]);
+        var total = 0;
+        for (var i = 0; i < timesRoll; i++) {
+            total += Random.next(1, dieSides);
+        }
+        return total;
+    };
+    return Dice;
+}());
 var Random = (function () {
     function Random() {
     }
@@ -223,7 +236,6 @@ var Leaf = (function () {
             roomPos = new Point(Random.next(1, this.width - roomSize.x - 1), Random.next(1, this.height - roomSize.y - 1));
             this.room = new Room(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);
             this.room.addMonster();
-            this.room.addWeapon();
             this.room.addHealthPotion();
         }
     };
@@ -299,9 +311,11 @@ var Leaf = (function () {
     return Leaf;
 }());
 var DungeonMapGenerator = (function () {
-    function DungeonMapGenerator() {
+    function DungeonMapGenerator(level) {
+        if (level === void 0) { level = 1; }
         this.height = 45;
         this.width = 45;
+        this.level = level;
         this.generateMap();
     }
     DungeonMapGenerator.prototype.initialize = function () {
@@ -315,9 +329,9 @@ var DungeonMapGenerator = (function () {
     };
     DungeonMapGenerator.prototype.generateMap = function () {
         var _this = this;
+        debugger;
         // reset our mapData
         this.initialize();
-        //player.visible = false;
         // reset our arrays
         this.rooms = new Array();
         this.halls = new Array();
@@ -350,34 +364,40 @@ var DungeonMapGenerator = (function () {
             if (l.room !== undefined) {
                 _this.drawRoom(l.room);
                 _this.setRandomRoomTile(l.room, l.room.monster);
-                _this.setRandomRoomTile(l.room, l.room.weapon);
                 _this.setRandomRoomTile(l.room, l.room.healthPotion);
             }
             if (l.halls !== undefined && l.halls.length > 0) {
                 _this.drawHalls(l.halls);
             }
         });
-        this.player = new Player("Rebecca", 0, 1, new Weapon("1d6", "Dagger"));
+        debugger;
+        var weaponPt = this.getRandomRoomPt();
+        this.mapData[weaponPt.x][weaponPt.y] = WeaponFactory.get(1);
+        var stairsPt = this.getRandomRoomPt();
+        this.mapData[stairsPt.x][stairsPt.y] = new Tile("Stairs", MapTiles.stairs);
+        if (this.player === undefined) {
+            this.player = new Player("Rebecca", 0, 1, new Weapon("1d1", "Stick", 0));
+        }
         this.startPlayer();
-        // move the player sprite to the starting location (to get ready for the user to hit 'play')
-        // player.x = playerStart.x * 16 + 1;
-        // player.y = playerStart.y * 16 + 1;
-        //add staircases, up and down
         //monsters (pick based on current level, boss is last level)
     };
-    DungeonMapGenerator.prototype.startPlayer = function () {
-        // randomly pick one of the rooms for the player to start in...
+    DungeonMapGenerator.prototype.getRandomRoomPt = function () {
         var startRoom = this.rooms[Random.next(0, this.rooms.length)];
         // and pick a random tile in that room for them to start on.			
-        var isSet = false;
-        while (!isSet) {
-            var playerStart = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1), Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
-            if (this.mapData[playerStart.x][playerStart.y].symbol == MapTiles.floor) {
-                this.player.location = playerStart;
-                this.mapData[playerStart.x][playerStart.y] = this.player;
-                isSet = true;
+        var foundEmpty = false;
+        var tile;
+        while (!foundEmpty) {
+            tile = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1), Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
+            if (this.mapData[tile.x][tile.y].symbol == MapTiles.floor) {
+                foundEmpty = true;
             }
         }
+        return tile;
+    };
+    DungeonMapGenerator.prototype.startPlayer = function () {
+        var playerStart = this.getRandomRoomPt();
+        this.player.location = playerStart;
+        this.mapData[playerStart.x][playerStart.y] = this.player;
     };
     DungeonMapGenerator.prototype.setRandomRoomTile = function (room, mapObj) {
         if (mapObj !== undefined) {
@@ -441,6 +461,9 @@ var Monster = (function (_super) {
         _this.damageRoll = damageRoll;
         return _this;
     }
+    Monster.prototype.calcHp = function () {
+        this.hp = Dice.roll(this.hpRoll);
+    };
     return Monster;
 }(Entity));
 exports.Monster = Monster;
@@ -448,21 +471,20 @@ var Player = (function (_super) {
     __extends(Player, _super);
     function Player(name, xp, level, weapon) {
         var _this = _super.call(this, name, xp, level) || this;
-        _this.weapon = weapon;
         _this.symbol = MapTiles.player;
+        _this.weapon = weapon;
         _this.hp = 12;
         return _this;
     }
-    Player.prototype.addHealth = function (rollValue) {
-        this.hp += 20;
-        //Heals 1df per character level. Increase max HP by 1 if you are at full health.
+    Player.prototype.addHealth = function (increase) {
+        this.hp += increase;
     };
     Player.prototype.attack = function (opponent) {
         //roll the dice
         var opponentDamage = 0;
         var playerDamage = 0;
-        if (opponent.hp === 0)
-            opponent.hpRoll;
+        if (opponent.hp === 0) {
+        }
         opponent.hp -= playerDamage;
         this.hp -= opponentDamage;
     };
@@ -470,17 +492,20 @@ var Player = (function (_super) {
 }(Entity));
 var HealthPotion = (function () {
     function HealthPotion() {
-        this.valueRoll = "8d4";
+        this.hpRoll = "8d4";
         this.symbol = MapTiles.health;
+        this.name = "Health Potion";
+        this.hp = Dice.roll(this.hpRoll);
     }
     return HealthPotion;
 }());
 exports.HealthPotion = HealthPotion;
 var Weapon = (function () {
-    function Weapon(damage, name) {
-        if (name === void 0) { name = null; }
+    function Weapon(damageRoll, name, level) {
         this.symbol = MapTiles.weapon;
+        this.damageRoll = damageRoll;
         this.name = name;
+        this.level = level;
     }
     return Weapon;
 }());

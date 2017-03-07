@@ -1,9 +1,3 @@
-"use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 /*
 //http://www.rots.net/rogue/monsters.html
 User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
@@ -24,6 +18,12 @@ User Story: When I find and beat the boss, I win.
 
 User Story: The game should be challenging, but theoretically winnable.
 */
+"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var React = require('react');
 var ReactDOM = require('react-dom');
 require('./sass/styles.scss');
@@ -59,26 +59,11 @@ var UserInfo = (function (_super) {
     };
     return UserInfo;
 }(react_1.Component));
-var Dice = (function () {
-    function Dice() {
-    }
-    Dice.roll = function (value) {
-        var temp = value.split("d");
-        var timesRoll = parseInt(temp[0]);
-        var dieSides = parseInt(temp[1]);
-        var total = 0;
-        for (var i = 0; i = timesRoll; i++) {
-            total += dungeon_1.Random.next(1, dieSides);
-        }
-        return total;
-    };
-    return Dice;
-}());
 var DungeonGame = (function (_super) {
     __extends(DungeonGame, _super);
     function DungeonGame() {
         var _this = _super.call(this) || this;
-        _this.createDungeon();
+        _this.dungeon = new dungeon_1.DungeonMapGenerator();
         _this.move = _this.move.bind(_this);
         _this.state = { mapData: _this.dungeon.mapData, player: _this.dungeon.player };
         return _this;
@@ -104,72 +89,38 @@ var DungeonGame = (function (_super) {
                 newX++;
                 break;
         }
-        if (this.dungeon.mapData[newX][newY].symbol === dungeon_1.MapTiles.monster) {
-            //attack
-            this.dungeon.player.attack(this.dungeon.mapData[newX][newY]);
-            this.setState({ player: this.dungeon.player });
+        var doMove = false;
+        switch (this.dungeon.mapData[newX][newY].symbol) {
+            case dungeon_1.MapTiles.monster:
+                //attack
+                this.dungeon.player.attack(this.dungeon.mapData[newX][newY]);
+                this.setState({ player: this.dungeon.player });
+                break;
+            //is the monster dead? then allow move
+            case dungeon_1.MapTiles.stairs:
+                this.dungeon = new dungeon_1.DungeonMapGenerator();
+                break;
+            case dungeon_1.MapTiles.health:
+                var healthPotion = this.dungeon.mapData[newX][newY];
+                this.dungeon.player.addHealth(healthPotion.hp);
+                doMove = true;
+            case dungeon_1.MapTiles.weapon:
+                var weapon = this.dungeon.mapData[newX][newY];
+                this.dungeon.player.weapon = weapon;
+                doMove = true;
+                break;
+            case dungeon_1.MapTiles.corridor:
+            case dungeon_1.MapTiles.floor:
+                doMove = true;
+                break;
         }
-        else if (this.dungeon.mapData[newX][newY].symbol !== dungeon_1.MapTiles.empty) {
+        if (doMove) {
             this.dungeon.mapData[x][y] = new dungeon_1.Tile("Floor", dungeon_1.MapTiles.floor);
-            switch (this.dungeon.mapData[newX][newY].symbol) {
-                case dungeon_1.MapTiles.health:
-                    var healthPotion = this.dungeon.mapData[newX][newY];
-                    this.dungeon.player.addHealth(healthPotion.valueRoll);
-                    break;
-                case dungeon_1.MapTiles.weapon:
-                    var weapon = this.dungeon.mapData[newX][newY];
-                    this.dungeon.player.weapon = weapon;
-                    break;
-                case dungeon_1.MapTiles.stairs:
-                    break;
-            }
-            //hit up stairs
-            //hit monster
-            //hit weapon
-            this.dungeon.mapData[x][y] = this.state.player;
             this.dungeon.player.location.x = newX;
             this.dungeon.player.location.y = newY;
-            this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });
+            this.dungeon.mapData[newX][newY] = this.dungeon.player;
         }
-        // 	if (grpTestMap.visible)
-        // 	{
-        // 		// if we're in 'play' mode, arrow keys move the player
-        // 		if (FlxG.keys.LEFT)
-        // 		{
-        // 			player.velocity.x = -100;
-        // 		}
-        // 		else if (FlxG.keys.RIGHT)
-        // 		{
-        // 			player.velocity.x = 100;
-        // 		}
-        // 		else
-        // 		{
-        // 			player.velocity.x = 0;
-        // 		}
-        // 		if (FlxG.keys.UP)
-        // 		{
-        // 			player.velocity.y = -100;
-        // 		}
-        // 		else if (FlxG.keys.DOWN)
-        // 		{
-        // 			player.velocity.y = 100;
-        // 		}
-        // 		else
-        // 		{
-        // 			player.velocity.y = 0;
-        // 		}
-        // 		// check collison with the wall tiles in the map
-        // 		FlxG.collide(player, map);
-        // 	}
-    };
-    DungeonGame.prototype.engage = function (e) {
-        //who are you engaging?
-        //player.attack(dungeon.rooms[0].enemies[0]);
-    };
-    DungeonGame.prototype.createDungeon = function () {
-        // Add the up and down staircases at random points in map
-        // Finally, sprinkle some monsters and items liberally over dungeo
-        this.dungeon = new dungeon_1.DungeonMapGenerator();
+        this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });
     };
     DungeonGame.prototype.componentWillMount = function () {
         debugger;
@@ -232,11 +183,16 @@ var MapCell = (function (_super) {
             case dungeon_1.MapTiles.health:
                 mapTileClass = " health";
                 break;
+            case dungeon_1.MapTiles.stairs:
+                mapTileClass = " stairs";
+                break;
             default:
                 mapTileClass = "";
                 break;
         }
-        return React.createElement("div", { className: "board-cell" + mapTileClass });
+        var title = this.props.tile.name + (this.props.tile.hp === undefined ? "" : "\nHP: " + this.props.tile.hp)
+            + (this.props.tile.damageRoll === undefined ? "" : "\nDamage: " + this.props.tile.damageRoll);
+        return React.createElement("div", { className: "board-cell" + mapTileClass, title: title });
     };
     MapCell.prototype.shouldComponentUpdate = function (nextProps, nextState) {
         return this.props.tile != nextProps.tile;
@@ -253,7 +209,7 @@ var MapRow = (function (_super) {
         var j = 0;
         var cells = this.props.cells.map(function (cell) {
             j++;
-            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell, cellInfo: j + "," + _this.props.rowNumber });
+            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell });
         });
         return (React.createElement("div", { className: "board-row" }, cells));
     };

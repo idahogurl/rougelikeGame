@@ -52,12 +52,6 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
-	var __extends = (this && this.__extends) || function (d, b) {
-	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	    function __() { this.constructor = d; }
-	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-	};
 	/*
 	//http://www.rots.net/rogue/monsters.html
 	User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
@@ -78,6 +72,12 @@
 
 	User Story: The game should be challenging, but theoretically winnable.
 	*/
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
 	var React = __webpack_require__(2);
 	var ReactDOM = __webpack_require__(33);
 	__webpack_require__(184);
@@ -113,26 +113,11 @@
 	    };
 	    return UserInfo;
 	}(react_1.Component));
-	var Dice = (function () {
-	    function Dice() {
-	    }
-	    Dice.roll = function (value) {
-	        var temp = value.split("d");
-	        var timesRoll = parseInt(temp[0]);
-	        var dieSides = parseInt(temp[1]);
-	        var total = 0;
-	        for (var i = 0; i = timesRoll; i++) {
-	            total += dungeon_1.Random.next(1, dieSides);
-	        }
-	        return total;
-	    };
-	    return Dice;
-	}());
 	var DungeonGame = (function (_super) {
 	    __extends(DungeonGame, _super);
 	    function DungeonGame() {
 	        var _this = _super.call(this) || this;
-	        _this.createDungeon();
+	        _this.dungeon = new dungeon_1.DungeonMapGenerator();
 	        _this.move = _this.move.bind(_this);
 	        _this.state = { mapData: _this.dungeon.mapData, player: _this.dungeon.player };
 	        return _this;
@@ -158,72 +143,38 @@
 	                newX++;
 	                break;
 	        }
-	        if (this.dungeon.mapData[newX][newY].symbol === dungeon_1.MapTiles.monster) {
-	            //attack
-	            this.dungeon.player.attack(this.dungeon.mapData[newX][newY]);
-	            this.setState({ player: this.dungeon.player });
+	        var doMove = false;
+	        switch (this.dungeon.mapData[newX][newY].symbol) {
+	            case dungeon_1.MapTiles.monster:
+	                //attack
+	                this.dungeon.player.attack(this.dungeon.mapData[newX][newY]);
+	                this.setState({ player: this.dungeon.player });
+	                break;
+	            //is the monster dead? then allow move
+	            case dungeon_1.MapTiles.stairs:
+	                this.dungeon = new dungeon_1.DungeonMapGenerator();
+	                break;
+	            case dungeon_1.MapTiles.health:
+	                var healthPotion = this.dungeon.mapData[newX][newY];
+	                this.dungeon.player.addHealth(healthPotion.hp);
+	                doMove = true;
+	            case dungeon_1.MapTiles.weapon:
+	                var weapon = this.dungeon.mapData[newX][newY];
+	                this.dungeon.player.weapon = weapon;
+	                doMove = true;
+	                break;
+	            case dungeon_1.MapTiles.corridor:
+	            case dungeon_1.MapTiles.floor:
+	                doMove = true;
+	                break;
 	        }
-	        else if (this.dungeon.mapData[newX][newY].symbol !== dungeon_1.MapTiles.empty) {
+	        if (doMove) {
 	            this.dungeon.mapData[x][y] = new dungeon_1.Tile("Floor", dungeon_1.MapTiles.floor);
-	            switch (this.dungeon.mapData[newX][newY].symbol) {
-	                case dungeon_1.MapTiles.health:
-	                    var healthPotion = this.dungeon.mapData[newX][newY];
-	                    this.dungeon.player.addHealth(healthPotion.valueRoll);
-	                    break;
-	                case dungeon_1.MapTiles.weapon:
-	                    var weapon = this.dungeon.mapData[newX][newY];
-	                    this.dungeon.player.weapon = weapon;
-	                    break;
-	                case dungeon_1.MapTiles.stairs:
-	                    break;
-	            }
-	            //hit up stairs
-	            //hit monster
-	            //hit weapon
-	            this.dungeon.mapData[x][y] = this.state.player;
 	            this.dungeon.player.location.x = newX;
 	            this.dungeon.player.location.y = newY;
-	            this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });
+	            this.dungeon.mapData[newX][newY] = this.dungeon.player;
 	        }
-	        // 	if (grpTestMap.visible)
-	        // 	{
-	        // 		// if we're in 'play' mode, arrow keys move the player
-	        // 		if (FlxG.keys.LEFT)
-	        // 		{
-	        // 			player.velocity.x = -100;
-	        // 		}
-	        // 		else if (FlxG.keys.RIGHT)
-	        // 		{
-	        // 			player.velocity.x = 100;
-	        // 		}
-	        // 		else
-	        // 		{
-	        // 			player.velocity.x = 0;
-	        // 		}
-	        // 		if (FlxG.keys.UP)
-	        // 		{
-	        // 			player.velocity.y = -100;
-	        // 		}
-	        // 		else if (FlxG.keys.DOWN)
-	        // 		{
-	        // 			player.velocity.y = 100;
-	        // 		}
-	        // 		else
-	        // 		{
-	        // 			player.velocity.y = 0;
-	        // 		}
-	        // 		// check collison with the wall tiles in the map
-	        // 		FlxG.collide(player, map);
-	        // 	}
-	    };
-	    DungeonGame.prototype.engage = function (e) {
-	        //who are you engaging?
-	        //player.attack(dungeon.rooms[0].enemies[0]);
-	    };
-	    DungeonGame.prototype.createDungeon = function () {
-	        // Add the up and down staircases at random points in map
-	        // Finally, sprinkle some monsters and items liberally over dungeo
-	        this.dungeon = new dungeon_1.DungeonMapGenerator();
+	        this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });
 	    };
 	    DungeonGame.prototype.componentWillMount = function () {
 	        debugger;
@@ -286,11 +237,16 @@
 	            case dungeon_1.MapTiles.health:
 	                mapTileClass = " health";
 	                break;
+	            case dungeon_1.MapTiles.stairs:
+	                mapTileClass = " stairs";
+	                break;
 	            default:
 	                mapTileClass = "";
 	                break;
 	        }
-	        return React.createElement("div", { className: "board-cell" + mapTileClass });
+	        var title = this.props.tile.name + (this.props.tile.hp === undefined ? "" : "\nHP: " + this.props.tile.hp)
+	            + (this.props.tile.damageRoll === undefined ? "" : "\nDamage: " + this.props.tile.damageRoll);
+	        return React.createElement("div", { className: "board-cell" + mapTileClass, title: title });
 	    };
 	    MapCell.prototype.shouldComponentUpdate = function (nextProps, nextState) {
 	        return this.props.tile != nextProps.tile;
@@ -307,7 +263,7 @@
 	        var j = 0;
 	        var cells = this.props.cells.map(function (cell) {
 	            j++;
-	            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell, cellInfo: j + "," + _this.props.rowNumber });
+	            return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell });
 	        });
 	        return (React.createElement("div", { className: "board-row" }, cells));
 	    };
@@ -22082,7 +22038,7 @@
 
 
 	// module
-	exports.push([module.id, ".board-row {\n  display: table-row;\n  height: 15px; }\n\n.board-cell {\n  display: table-cell;\n  height: inherit;\n  width: 15px;\n  border: 1px solid; }\n  .board-cell.floor {\n    background-color: tan; }\n  .board-cell.wall {\n    background-color: black; }\n  .board-cell.corridor {\n    background-color: tan; }\n  .board-cell.monster {\n    background-color: red; }\n  .board-cell.weapon {\n    background-color: orange; }\n  .board-cell.health {\n    background-color: limegreen; }\n  .board-cell.player {\n    background-color: blue; }\n", ""]);
+	exports.push([module.id, ".board-row {\n  display: table-row;\n  height: 15px; }\n\n.board-cell {\n  display: table-cell;\n  height: inherit;\n  width: 15px;\n  border: 1px solid; }\n  .board-cell.floor {\n    background-color: tan; }\n  .board-cell.wall {\n    background-color: black; }\n  .board-cell.corridor {\n    background-color: tan; }\n  .board-cell.monster {\n    background-color: red; }\n  .board-cell.weapon {\n    background-color: orange; }\n  .board-cell.health {\n    background-color: limegreen; }\n  .board-cell.player {\n    background-color: blue; }\n  .board-cell.stairs {\n    background-color: rebeccapurple; }\n", ""]);
 
 	// exports
 
@@ -22447,25 +22403,20 @@
 	            this.healthPotion = new HealthPotion();
 	        }
 	    };
-	    Room.prototype.addWeapon = function () {
-	        if (Math.random() < 0.25) {
-	            this.weapon = WeaponFactory.random();
-	        }
-	    };
 	    return Room;
 	}(Rectangle));
 	var WeaponFactory = (function () {
 	    function WeaponFactory() {
 	    }
-	    WeaponFactory.random = function () {
-	        var weapons = [
-	            new Weapon("2d4", "Mace"),
-	            new Weapon("3d4", "Long sword"),
-	            new Weapon("1d6", "Dagger"),
-	            new Weapon("4d4", "Two handed sword"),
-	            new Weapon("2d3", "Spear")
-	        ];
-	        return weapons[Random.next(0, weapons.length - 1)];
+	    WeaponFactory.get = function (level) {
+	        var weapons = {
+	            3: new Weapon("2d4", "Mace", 3),
+	            4: new Weapon("3d4", "Long sword", 4),
+	            1: new Weapon("1d6", "Dagger", 1),
+	            5: new Weapon("4d4", "Two handed sword", 5),
+	            2: new Weapon("2d3", "Spear", 2)
+	        };
+	        return weapons[level];
 	    };
 	    return WeaponFactory;
 	}());
@@ -22497,6 +22448,8 @@
 	            new Monster("Yeti", 50, 4, "4d8", "1d6/1d6"),
 	            new Monster("Zombie", 6, 2, "2d8", "1d")
 	        ];
+	        var monster = monsters[Random.next(0, monsters.length - 1)];
+	        monster.calcHp();
 	        return monsters[Random.next(0, monsters.length - 1)];
 	    };
 	    return MonsterFactory;
@@ -22517,6 +22470,22 @@
 	MapTiles.monster = "M";
 	MapTiles.player = "P";
 	exports.MapTiles = MapTiles;
+	var Dice = (function () {
+	    function Dice() {
+	    }
+	    Dice.roll = function (value) {
+	        var temp = value.split("d");
+	        debugger;
+	        var timesRoll = parseInt(temp[0]);
+	        var dieSides = parseInt(temp[1]);
+	        var total = 0;
+	        for (var i = 0; i < timesRoll; i++) {
+	            total += Random.next(1, dieSides);
+	        }
+	        return total;
+	    };
+	    return Dice;
+	}());
 	var Random = (function () {
 	    function Random() {
 	    }
@@ -22624,7 +22593,6 @@
 	            roomPos = new Point(Random.next(1, this.width - roomSize.x - 1), Random.next(1, this.height - roomSize.y - 1));
 	            this.room = new Room(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);
 	            this.room.addMonster();
-	            this.room.addWeapon();
 	            this.room.addHealthPotion();
 	        }
 	    };
@@ -22700,9 +22668,11 @@
 	    return Leaf;
 	}());
 	var DungeonMapGenerator = (function () {
-	    function DungeonMapGenerator() {
+	    function DungeonMapGenerator(level) {
+	        if (level === void 0) { level = 1; }
 	        this.height = 45;
 	        this.width = 45;
+	        this.level = level;
 	        this.generateMap();
 	    }
 	    DungeonMapGenerator.prototype.initialize = function () {
@@ -22716,9 +22686,9 @@
 	    };
 	    DungeonMapGenerator.prototype.generateMap = function () {
 	        var _this = this;
+	        debugger;
 	        // reset our mapData
 	        this.initialize();
-	        //player.visible = false;
 	        // reset our arrays
 	        this.rooms = new Array();
 	        this.halls = new Array();
@@ -22751,34 +22721,40 @@
 	            if (l.room !== undefined) {
 	                _this.drawRoom(l.room);
 	                _this.setRandomRoomTile(l.room, l.room.monster);
-	                _this.setRandomRoomTile(l.room, l.room.weapon);
 	                _this.setRandomRoomTile(l.room, l.room.healthPotion);
 	            }
 	            if (l.halls !== undefined && l.halls.length > 0) {
 	                _this.drawHalls(l.halls);
 	            }
 	        });
-	        this.player = new Player("Rebecca", 0, 1, new Weapon("1d6", "Dagger"));
+	        debugger;
+	        var weaponPt = this.getRandomRoomPt();
+	        this.mapData[weaponPt.x][weaponPt.y] = WeaponFactory.get(1);
+	        var stairsPt = this.getRandomRoomPt();
+	        this.mapData[stairsPt.x][stairsPt.y] = new Tile("Stairs", MapTiles.stairs);
+	        if (this.player === undefined) {
+	            this.player = new Player("Rebecca", 0, 1, new Weapon("1d1", "Stick", 0));
+	        }
 	        this.startPlayer();
-	        // move the player sprite to the starting location (to get ready for the user to hit 'play')
-	        // player.x = playerStart.x * 16 + 1;
-	        // player.y = playerStart.y * 16 + 1;
-	        //add staircases, up and down
 	        //monsters (pick based on current level, boss is last level)
 	    };
-	    DungeonMapGenerator.prototype.startPlayer = function () {
-	        // randomly pick one of the rooms for the player to start in...
+	    DungeonMapGenerator.prototype.getRandomRoomPt = function () {
 	        var startRoom = this.rooms[Random.next(0, this.rooms.length)];
 	        // and pick a random tile in that room for them to start on.			
-	        var isSet = false;
-	        while (!isSet) {
-	            var playerStart = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1), Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
-	            if (this.mapData[playerStart.x][playerStart.y].symbol == MapTiles.floor) {
-	                this.player.location = playerStart;
-	                this.mapData[playerStart.x][playerStart.y] = this.player;
-	                isSet = true;
+	        var foundEmpty = false;
+	        var tile;
+	        while (!foundEmpty) {
+	            tile = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1), Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
+	            if (this.mapData[tile.x][tile.y].symbol == MapTiles.floor) {
+	                foundEmpty = true;
 	            }
 	        }
+	        return tile;
+	    };
+	    DungeonMapGenerator.prototype.startPlayer = function () {
+	        var playerStart = this.getRandomRoomPt();
+	        this.player.location = playerStart;
+	        this.mapData[playerStart.x][playerStart.y] = this.player;
 	    };
 	    DungeonMapGenerator.prototype.setRandomRoomTile = function (room, mapObj) {
 	        if (mapObj !== undefined) {
@@ -22842,6 +22818,9 @@
 	        _this.damageRoll = damageRoll;
 	        return _this;
 	    }
+	    Monster.prototype.calcHp = function () {
+	        this.hp = Dice.roll(this.hpRoll);
+	    };
 	    return Monster;
 	}(Entity));
 	exports.Monster = Monster;
@@ -22849,21 +22828,20 @@
 	    __extends(Player, _super);
 	    function Player(name, xp, level, weapon) {
 	        var _this = _super.call(this, name, xp, level) || this;
-	        _this.weapon = weapon;
 	        _this.symbol = MapTiles.player;
+	        _this.weapon = weapon;
 	        _this.hp = 12;
 	        return _this;
 	    }
-	    Player.prototype.addHealth = function (rollValue) {
-	        this.hp += 20;
-	        //Heals 1df per character level. Increase max HP by 1 if you are at full health.
+	    Player.prototype.addHealth = function (increase) {
+	        this.hp += increase;
 	    };
 	    Player.prototype.attack = function (opponent) {
 	        //roll the dice
 	        var opponentDamage = 0;
 	        var playerDamage = 0;
-	        if (opponent.hp === 0)
-	            opponent.hpRoll;
+	        if (opponent.hp === 0) {
+	        }
 	        opponent.hp -= playerDamage;
 	        this.hp -= opponentDamage;
 	    };
@@ -22871,17 +22849,20 @@
 	}(Entity));
 	var HealthPotion = (function () {
 	    function HealthPotion() {
-	        this.valueRoll = "8d4";
+	        this.hpRoll = "8d4";
 	        this.symbol = MapTiles.health;
+	        this.name = "Health Potion";
+	        this.hp = Dice.roll(this.hpRoll);
 	    }
 	    return HealthPotion;
 	}());
 	exports.HealthPotion = HealthPotion;
 	var Weapon = (function () {
-	    function Weapon(damage, name) {
-	        if (name === void 0) { name = null; }
+	    function Weapon(damageRoll, name, level) {
 	        this.symbol = MapTiles.weapon;
+	        this.damageRoll = damageRoll;
 	        this.name = name;
+	        this.level = level;
 	    }
 	    return Weapon;
 	}());
