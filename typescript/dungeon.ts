@@ -2,7 +2,7 @@
 //Converted from ActionScript 3 to TypeScript
 class Rectangle
 {
-	//Reference: http://help.adobe.com/enUS/FlashPlatform/reference/actionscript/3/flash/geom/Rectangle.html
+	//Reference: http://help.adobe.com/enUS/FlashPlatform/reference/actionscript/3/flash/geom/Rectangle.html	
 	x:number; //The x coordinate of the top-left corner of the rectangle.
 	y:number; //The y coordinate of the top-left corner of the rectangle.
 	width:number;
@@ -25,15 +25,15 @@ class Rectangle
 	{
 		return this.y + this.height;
 	}
-	//The sum of the x and width properties.
+	//The x coordinate of the top-left corner of the rectangle.
 	left()
 	{
-		return this.x + this.width;
+		return this.x;
 	}
-	//The x coordinate of the top-left corner of the rectangle.
+	//The sum of the x and width properties.
 	right():number
 	{
-		return this.x;
+		return this.x + this.width;
 	}		
 }
 class Room extends Rectangle
@@ -43,15 +43,15 @@ class Room extends Rectangle
 	weapon:Weapon;
 	stairs:Tile;
 
-	addMonster()
+	addMonsters(level: number)
 	{
 		if (Math.random() < 0.5) {
-			this.monster = MonsterFactory.random();
+			this.monster = MonsterFactory.random(level);
 		}
 	}
-	addHealthPotion()
+	addHealthPotions()
 	{
-		if (Math.random() < 0.5) {
+		if (Math.random() < 0.25) {
 			this.healthPotion = new HealthPotion();			
 		}
 	}
@@ -69,42 +69,73 @@ class WeaponFactory
 
 		return weapons[level];
 	}
-
-	constructor() {
-
-	}
 }
 class MonsterFactory 
 {
-	static random() : Monster 
+	static random(level:number) : Monster 
 	{
-		let monsters = [ 
-			new Monster("Bat", 1, 1, "1d8", "1d2"),				
-			new Monster("Centaur", 25, 4, "4d8", "1d2/1d5/1d5"),
-			new Monster("Dragon", 6800, 10, "10d8", "1d8/1d8/3d10"),
-			new Monster("Emu", 2, 1, "1d8", "1d2"),
-			new Monster("Griffin", 2000, 20,"13d8", "4d3/3d5/4d3"),
-			new Monster("Hobgoblin", 3, 1, "1d8", "1d8"),
-			new Monster("Jabberwock",3000, 15,  "15d8", "2d12/2d4"),
-			new Monster("Kestral", 1, 7, "1d8", "1d4"),
-			new Monster("Leprechaun", 10, 3, "3d8", "1d2"),
-			new Monster("Medusa", 200, 8, "8d8", "3d4/3d4/2d5"),
-			new Monster("Orc", 5, 1, "1d8", "1d8"),
-			new Monster("Phantom", 120, 8, "8d8", "4d4"),
-			new Monster("Quagga", 32, 3, "3d8", "1d2/1d2/1d4"),
-			new Monster("Rattlesnake", 9, 2, "2d8", "1d6"),
-			new Monster("Snake", 1, 2, "1d8", "1d3"),
-			new Monster("Troll", 120, 6, "6d8", "1d8/1d8/2d6"),
-			new Monster("Ur-vile", 190, 7, "7d8", "1d3/1d3/1d3/4d6"),
-			new Monster("Vampire", 350, 8, "8d8", "1d10"),
-			new Monster("Wraith", 55, 5, "5d8", "1d6"),
-			new Monster("Xeroc", 100, 7, "7d8", "3d4"),
-			new Monster("Yeti", 50,	4, "4d8", "1d6/1d6"),
-			new Monster("Zombie", 6, 2, "2d8", "1d")
-		];
-		let monster = monsters[Random.next(0, monsters.length - 1)];
+		let monsters = { 
+			1: [ 
+					new Monster("Bat", 1, 1, "1d8", "1d2"), 
+					new Monster("Emu", 2, 1, "1d8", "1d2"),
+					new Monster("Hobgoblin", 3, 1, "1d8", "1d8"),
+					new Monster("Orc", 5, 1, "1d8", "1d8"),
+				],
+			2: [
+					new Monster("Rattlesnake", 9, 2, "2d8", "1d6"),
+					new Monster("Snake", 1, 2, "1d8", "1d3"),
+					new Monster("Zombie", 6, 2, "2d8", "1d8")
+				],
+			3: new Monster("Quagga", 32, 3, "3d8", "1d2/1d2/1d4"),	
+			4: [ 
+					new Monster("Centaur", 25, 4, "4d8", "1d2/1d5/1d5"),
+					new Monster("Yeti", 50,	4, "4d8", "1d6/1d6")
+				],
+			5: new Monster("Wraith", 55, 5, "5d8", "1d6"),
+			6: new Monster("Troll", 120, 6, "6d8", "1d8/1d8/2d6"),
+			7: [
+					new Monster("Kestral", 1, 7, "1d8", "1d4"),
+					new Monster("Ur-vile", 190, 7, "7d8", "1d3/1d3/1d3/4d6"),
+					new Monster("Xeroc", 100, 7, "7d8", "3d4")
+				],
+			8: [ 
+					new Monster("Medusa", 200, 8, "8d8", "3d4/3d4/2d5"),
+					new Monster("Phantom", 120, 8, "8d8", "4d4"),
+					new Monster("Vampire", 350, 8, "8d8", "1d10")
+				],
+			10: [ 
+					new Monster("Dragon", 6800, 10, "10d8", "1d8/1d8/3d10"), 
+					new Monster("Leprechaun", 10, 3, "3d8", "1d2")
+				],
+			15: new Monster("Jabberwock",3000, 15,  "15d8", "2d12/2d4"),
+			20: new Monster("Griffin", 2000, 20,"13d8", "4d3/3d5/4d3")
+		};
+		
+		let selectedMonsters:Monster[] = [];
+		//get the monsters less than or equal to the dungeon level
+		for (let monster in monsters) 
+		{
+			let key = parseInt(monster);
+			if (key <= level) {
+				if (Array.isArray(monsters[key])) 
+				{
+					monsters[key].forEach(m => 
+					{
+						selectedMonsters.push(m);
+					});
+				} 
+				else 
+				{
+					selectedMonsters.push(monsters[key]);
+				}
+			}
+		}
+		
+		//return a random monster from the list
+		let monster = selectedMonsters[Random.next(0, selectedMonsters.length - 1)];
 		monster.calcHp();
-		return monsters[Random.next(0, monsters.length - 1)];
+
+		return monster;
 	}
 }
 export class MapTiles
@@ -122,15 +153,21 @@ export class MapTiles
 }
 class Dice {
     static roll(value):number {
-        let temp = value.split("d");
-        debugger;
-        let timesRoll = parseInt(temp[0]);
-        let dieSides = parseInt(temp[1]);
-        let total = 0;
-            
-        for (let i = 0; i < timesRoll; i++) {
-            total += Random.next(1, dieSides);
-        }
+		let total = 0;
+		
+		//some monsters have damage that uses multiple dice in addition to multiple rolls
+		let rolls = value.split("/");
+        rolls.forEach(r => {
+			let temp = value.split("d");
+        	//debugger;
+        	let timesRoll = parseInt(temp[0]);
+        	let dieSides = parseInt(temp[1]);
+
+			for (let i = 0; i < timesRoll; i++) {
+            	total += Random.next(1, dieSides);
+        	}        	
+		});
+		
         return total;
     }
 }
@@ -167,11 +204,11 @@ class Leaf
 	room:Room;				// the room that is inside this leaf
 	halls:Rectangle[];	// hallways to connect this leaf to other leafs
 
-	constructor(X:number, Y:number, Width:number, Height:number)
+	constructor(x:number, y:number, Width:number, Height:number)
 	{
 		// initialize our leaf
-		this.x = X;
-		this.y = Y;
+		this.x = x;
+		this.y = y;
 		this.width = Width;
 		this.height = Height;
 	}
@@ -242,7 +279,7 @@ class Leaf
 				return rRoom;
 		}
 	}
-	createRooms()
+	createRooms(level: number)
 	{
 		// this generates all the rooms and hallways for this leaf and all it's children.
 		if (this.leftChild != null || this.rightChild != null)
@@ -250,19 +287,19 @@ class Leaf
 			// this leaf has been split, so go into the children leafs
 			if (this.leftChild != null)
 			{
-				this.leftChild.createRooms();
+				this.leftChild.createRooms(level);
 			}
 			if (this.rightChild != null)
 			{
-				this.rightChild.createRooms();
+				this.rightChild.createRooms(level);
 			}
 
 			// if there are both left and right children in this leaf, create a hallway between them
 			if (this.leftChild != null && this.rightChild != null)
 			{
+				//debugger;
 				this.halls = this.createHall(this.leftChild.getRoom(), this.rightChild.getRoom());
 			}
-
 		}
 		else
 		{
@@ -273,9 +310,10 @@ class Leaf
 			roomSize = new Point(Random.next(3, this.width - 2), Random.next(3, this.height - 2));
 			// place the room within the leaf don't put it right against the side of the leaf (that would merge rooms together)
 			roomPos = new Point(Random.next(1, this.width - roomSize.x - 1), Random.next(1, this.height - roomSize.y - 1));
-			this.room = new Room(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);				
-			this.room.addMonster();
-			this.room.addHealthPotion();
+			this.room = new Room(this.x + roomPos.x, this.y + roomPos.y, roomSize.x, roomSize.y);
+						
+			this.room.addMonsters(level);
+			this.room.addHealthPotions();
 		}
 	}
 	createHall(l:Rectangle, r:Rectangle):Rectangle[]
@@ -284,7 +322,7 @@ class Leaf
 		// this looks pretty complicated, but it's just trying to figure out which  point is where and then either draw a straight line, or a pair of lines to make a right-angle to connect them.
 		// you could do some extra logic to make your halls more bendy, or do some more advanced things if you wanted.
 		let halls = new Array<Rectangle>();
-
+		//debugger;
 		let point1:Point = new Point(Random.next(l.left() + 1, l.right() - 2), Random.next(l.top() + 1, l.bottom() - 2));
 		let point2:Point = new Point(Random.next(r.left() + 1, r.right() - 2), Random.next(r.top() + 1, r.bottom() - 2));
 
@@ -375,8 +413,8 @@ class Leaf
 }
 export class DungeonMapGenerator
 {
-	height = 45;
-	width = 45;
+	height = 30;
+	width = 40;
 	
 	mapData:MapObj[][];	// our map Data - we draw our map here to be turned into a tilemap later
 	player: Player;
@@ -385,9 +423,9 @@ export class DungeonMapGenerator
 	leafs:Leaf[];		// an array that holds all our leafs
 	level:number;
 
-	constructor(level = 1)
+	constructor()
 	{
-		this.level = level;
+		this.level = 1;
 		this.generateMap();
 	}
 	initialize()
@@ -396,13 +434,14 @@ export class DungeonMapGenerator
 		for (let row = 0; row < this.height; row++) {
 			this.mapData[row] = new Array(this.width);
 			for (let col = 0; col < this.width; col++) {
-				this.mapData[row][col] = new Tile("Empty", MapTiles.empty);
+				this.mapData[row][col] = new Tile(null, MapTiles.empty);
 			}
 		}
+		//debugger;
 	}
 	generateMap()
 	{
-		debugger;
+		//debugger;
 		// reset our mapData
 		this.initialize();
 
@@ -440,13 +479,14 @@ export class DungeonMapGenerator
 		}
 
 		// next, iterate through each leaf and create a room in each one.
-		root.createRooms();
-
+		root.createRooms(this.level);
+		
 		this.leafs.forEach(l =>
 		{
 			// then we draw the room and hallway if it exists
 			if (l.room !== undefined)
 			{
+				debugger;
 				this.drawRoom(l.room);					
 				this.setRandomRoomTile(l.room, l.room.monster);				
 				this.setRandomRoomTile(l.room, l.room.healthPotion);
@@ -457,15 +497,17 @@ export class DungeonMapGenerator
 				this.drawHalls(l.halls);
 			}
 		});
-		debugger;
-		let weaponPt = this.getRandomRoomPt();
-		this.mapData[weaponPt.x][weaponPt.y] = WeaponFactory.get(1);
 		
-		let stairsPt = this.getRandomRoomPt();
-		this.mapData[stairsPt.x][stairsPt.y] = new Tile("Stairs", MapTiles.stairs);
+		//let weaponPt = this.getRandomRoomPt();
+		//if (weaponPt.x === undefined) debugger;
+		//this.mapData[weaponPt.x][weaponPt.y] = WeaponFactory.get(this.level);
+		
+		//let stairsPt = this.getRandomRoomPt();
+		//if (stairsPt.x === undefined) debugger;
+		//this.mapData[stairsPt.x][stairsPt.y] = new Tile("Stairs", MapTiles.stairs);
 
 		if (this.player === undefined) {
-			this.player = new Player("Rebecca", 0, 1, new Weapon("1d1", "Stick", 0));
+			this.player = new Player("You", 0, 1, new Weapon("1d2", "Stick", 0));
 		}
 		this.startPlayer();					
 		
@@ -473,16 +515,18 @@ export class DungeonMapGenerator
 	}
 	getRandomRoomPt(): Point 
 	{
-		let startRoom:Rectangle = this.rooms[Random.next(0, this.rooms.length)];
+		let startRoom:Rectangle = this.rooms[Random.next(0, this.rooms.length - 1)];
 		// and pick a random tile in that room for them to start on.			
 		let foundEmpty = false;
 		let tile:Point;
 		while (!foundEmpty)
 		{ //continue trying to find open floor
-			tile = new Point(Random.next(startRoom.x, startRoom.x + startRoom.width - 1),
-				Random.next(startRoom.y, startRoom.y + startRoom.height - 1));
-			if (this.mapData[tile.x][tile.y].symbol == MapTiles.floor)
+			tile = new Point(Random.next(startRoom.left(), startRoom.right()),
+				Random.next(startRoom.top(), startRoom.bottom()));
+				debugger;
+			if (this.mapData[tile.y][tile.x].symbol == MapTiles.floor)
 			{
+				//debugger;
 				foundEmpty = true;
 			}
 		}
@@ -490,9 +534,9 @@ export class DungeonMapGenerator
 	}
 	startPlayer()
 	{
-		let playerStart = this.getRandomRoomPt();
-		this.player.location = playerStart;
-		this.mapData[playerStart.x][playerStart.y] = this.player;
+		//let playerStart = this.getRandomRoomPt();
+		//this.player.location = playerStart;
+		//this.mapData[playerStart.x][playerStart.y] = this.player;
 	}
 	setRandomRoomTile(room:Room, mapObj:MapObj)
 	{
@@ -502,10 +546,11 @@ export class DungeonMapGenerator
 			
 			while (!isSet) 
 			{
+				debugger;
 				let y = Random.next(room.top(), room.bottom())
 				let x = Random.next(room.left(), room.right());
-				if (this.mapData[x][y].symbol === MapTiles.floor) {
-					this.mapData[x][y] = mapObj;
+				if (this.mapData[y][x].symbol === MapTiles.floor) {
+					this.mapData[y][x] = mapObj;
 					isSet = true;
 				}
 			}
@@ -518,20 +563,21 @@ export class DungeonMapGenerator
 		h.forEach(r =>
 		{
 			this.halls.push(r);
-			this.drawRectangle(r, new Tile("Corridor", MapTiles.corridor));
+			this.drawRectangle(r, new Tile(null, MapTiles.corridor));
 		});
 	}
 	drawRoom(r:Room)
 	{
 		// add this room to the room array, and draw the room onto our mapData
 		this.rooms.push(r);			
-		this.drawRectangle(r, new Tile("Floor", MapTiles.floor));
+		this.drawRectangle(r, new Tile(null, MapTiles.floor));
 	}
 	drawRectangle(r:Rectangle, tile:Tile)
 	{			
-		for (let x = r.x; x < r.left(); x++) {
-			for (let y = r.y; y < r.bottom(); y++) {
-				this.mapData[x][y] = tile;
+		//debugger;
+		for (let y = r.y; y < r.bottom(); y++) {
+			for (let x = r.x; x < r.right(); x++) {
+				this.mapData[y][x] = tile;
 			}
 		}
 	}		
@@ -570,6 +616,7 @@ export class Monster extends Entity {
 
 	private hpRoll: string;
 	damageRoll: string;
+	damage: number;
 
 	constructor(name:string, xp:number, level:number, hpRoll:string, damageRoll:string) {
 		super(name, xp, level);
@@ -582,8 +629,18 @@ export class Monster extends Entity {
 	}
 }
 class Player extends Entity {
+/*
+You start at level 1 and can reach a maximum level of 30.
+*/
+
+	experinceLevels = [
+		0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
+		1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
+	];
+
 	weapon:Weapon;
 	location: Point;
+	damageTaken: number;
 
 	constructor(name:string, xp:number, level:number, weapon:Weapon) {
 		super(name, xp, level);
@@ -594,17 +651,45 @@ class Player extends Entity {
 	addHealth(increase: number) {
 		this.hp += increase;		
 	}
+	getAttackBonus():number {
+		if (this.level < 5) {
+			return 0;
+		} else if (this.level < 10) {
+			return 1;
+		} else if (this.level < 15) {
+			return 2;
+		} else if (this.level < 20) {
+			return 3;
+		}
+		return 4;
+	}
 	attack(opponent: Monster) 
     {
         //roll the dice
-        let opponentDamage = 0;
-        let playerDamage = 0;
-		if (opponent.hp === 0) {
-			//dead
-		}
-        opponent.hp -= playerDamage;
-        this.hp -= opponentDamage;        
+        opponent.damage = Dice.roll(opponent.damageRoll);
+        
+		this.weapon.damage = Dice.roll(this.weapon.damageRoll) + this.getAttackBonus();
+		//add bonus points based on player's level
+
+        opponent.hp -= this.weapon.damage;
+		this.damageTaken = opponent.damage;
+        this.hp -= opponent.damage;
+
+		this.gainXp(opponent.xp);
     }
+	gainXp(xp:number) {
+		this.xp += xp;
+
+		//increase level while level's xp is less than or equal to the player's xp
+		let level = 0;
+		this.experinceLevels.forEach(l => {
+			if (l <= this.xp) {
+				level++;
+			}
+		});
+
+		this.level = level;	
+	}
 }
 export class HealthPotion implements MapObj
 {
