@@ -1,5 +1,6 @@
 /*
 //http://www.rots.net/rogue/monsters.html
+
 User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
 
 User Story: All the items and enemies on the map are arranged at random.
@@ -24,7 +25,8 @@ const ReactDOM = require('react-dom');
 
 require('./sass/styles.scss');
 
-import {DungeonMapGenerator,MapTiles,Random,Tile,HealthPotion,Weapon,Monster} from './dungeon';
+//import {DungeonMapGenerator,MapTiles,Random,Tile,HealthPotion,Weapon,Monster} from './dungeon';
+import {Map} from './dungeon';
 import {Component} from 'react';
 
 class UserInfo extends Component<any,any> {
@@ -54,100 +56,106 @@ class UserInfo extends Component<any,any> {
 }
 class DungeonGame extends Component<any,any> 
 {   
-    dungeon: DungeonMapGenerator;
+    dungeonMap: Map;
     
     constructor() 
     {
+        debugger;
         super();                
-        this.dungeon = new DungeonMapGenerator();
+        this.dungeonMap = new Map(800, 800, document.getElementById("map"));
+        this.dungeonMap.paint();
+
         this.move = this.move.bind(this);
-        this.state = {mapData: this.dungeon.mapData, player: this.dungeon.player};
+        //this.state = {mapData: this.dungeon.mapData, player: this.dungeon.player};
     }
     move(e)
     {
         //debugger;
         //can't move outside of room, won't move until monster is defeated, take when you go over a weapon or health potion
-        let x = this.dungeon.player.location.x;
-        let y = this.dungeon.player.location.y;
+        //let x = this.dungeon.player.location.x;
+        //let y = this.dungeon.player.location.y;
 
-        let newX = x;
-        let newY = y;
+        //let newX = x;
+        //let newY = y;
 
-        switch(e.keyCode) {
-            case 37: //up
-                newY--;
-                break;
-            case 38: //left
-                newX--;
-                break;
-            case 39: //down
-                newY++;
-                break;
-            case 40: //right
-                newX++;
-                break;
-        }
+        // switch(e.keyCode) {
+        //     case 37: //up
+        //         newY--;
+        //         break;
+        //     case 38: //left
+        //         newX--;
+        //         break;
+        //     case 39: //down
+        //         newY++;
+        //         break;
+        //     case 40: //right
+        //         newX++;
+        //         break;
+        // }
         
-        let doMove = false;
-        switch (this.dungeon.mapData[newX][newY].symbol)
-        {
-            case MapTiles.monster:
-                //attack
-                let monster = this.dungeon.mapData[newX][newY] as Monster;
-                this.dungeon.player.attack(monster);
-                this.setState({player: this.dungeon.player});
+        // let doMove = false;
+        // switch (this.dungeon.mapData[newX][newY].symbol)
+        // {
+        //     case MapTiles.monster:
+        //         //attack
+        //         let monster = this.dungeon.mapData[newX][newY] as Monster;
+        //         this.dungeon.player.attack(monster);
+        //         this.setState({player: this.dungeon.player});
                 
-                doMove = monster.hp <= 0;
+        //         doMove = monster.hp <= 0;
                
-                break;
-            case MapTiles.stairs:
-                this.dungeon.level += 1;
-                this.dungeon.generateMap();
-                break;
-            case MapTiles.health:
-            //debugger;
-                let healthPotion= this.dungeon.mapData[newX][newY] as HealthPotion;
-                this.dungeon.player.addHealth(healthPotion.hp);
+        //         break;
+        //     case MapTiles.stairs:
+        //         this.dungeon.level += 1;
+        //         this.dungeon.generateMap();
+        //         break;
+        //     case MapTiles.health:
+        //     //debugger;
+        //         let healthPotion= this.dungeon.mapData[newX][newY] as HealthPotion;
+        //         this.dungeon.player.addHealth(healthPotion.hp);
 
-                doMove = true;
-                break;
-            case MapTiles.weapon:
-            //debugger;                    
-                let weapon = this.dungeon.mapData[newX][newY] as Weapon;
-                this.dungeon.player.weapon = weapon;
+        //         doMove = true;
+        //         break;
+        //     case MapTiles.weapon:
+        //     //debugger;                    
+        //         let weapon = this.dungeon.mapData[newX][newY] as Weapon;
+        //         this.dungeon.player.weapon = weapon;
 
-                doMove = true;
-                break;
-            case MapTiles.corridor:
-            case MapTiles.floor:
-                doMove = true;
-                break;
-        }
+        //         doMove = true;
+        //         break;
+        //     case MapTiles.corridor:
+        //     case MapTiles.floor:
+        //         doMove = true;
+        //         break;
+        // }
 
-        if (doMove) {
-            this.dungeon.mapData[x][y] = new Tile("Floor", MapTiles.floor);
+        // if (doMove) {
+        //     this.dungeon.mapData[x][y] = new Tile("Floor", MapTiles.floor);
 
-            this.dungeon.player.location.x = newX;
-            this.dungeon.player.location.y = newY;
+        //     this.dungeon.player.location.x = newX;
+        //     this.dungeon.player.location.y = newY;
             
-            this.dungeon.mapData[newX][newY] = this.dungeon.player;
-        }
+        //     this.dungeon.mapData[newX][newY] = this.dungeon.player;
+        // }
 
-        this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });        		
+        // this.setState({ mapData: this.dungeon.mapData, player: this.dungeon.player });        		
     }
-    componentWillMount() {
+    componentWillMount() 
+    {
         //debugger;
         window.addEventListener("keydown", this.move);        
     }
-    componentWillUnmount() {
+    componentWillUnmount() 
+    {
         window.removeEventListener("keydown");
     }
-    render() {
-        ;
+    render() 
+    {
+        debugger;
         return (
             <div>
-            <UserInfo player={this.state.player} dungeonLevel={this.dungeon.level}/>
-            <Dungeon mapArea={this.state.mapData}/>
+            {/*<UserInfo player={this.state.player} dungeonLevel={this.dungeon.level}/>*/}
+            {/*<Dungeon mapArea={this.state.mapData}/>*/}
             </div>
         );
     }
@@ -172,39 +180,39 @@ class MapCell extends Component<any,any> {
     //is it a person, weapon, health item or enemy
     render() {        
         let mapTileClass:string;
-        //debugger;
-        switch (this.props.tile.symbol) {
-            case MapTiles.floor:
-                mapTileClass = " floor";
-                break;
-            case MapTiles.monster:
-                mapTileClass = " monster";
-                break;
-            case MapTiles.corridor:
-                mapTileClass = " corridor";
-                break;
-            case MapTiles.monster:
-                mapTileClass = " monster";
-                break;
-            case MapTiles.player:
-                mapTileClass = " player";
-                break;
-            case MapTiles.weapon:
-                mapTileClass = " weapon";
-                break;
-            case MapTiles.health:
-                mapTileClass = " health";
-                break;
-            case MapTiles.stairs:
-                mapTileClass = " stairs";
-                break;
-            default:
-                mapTileClass = "";
-                break;
-        }     
-        if (this.props.tile.name === null) {
-            return <div className={"board-cell" + mapTileClass}></div>
-        }
+        // //debugger;
+        // switch (this.props.tile.symbol) {
+        //     case MapTiles.floor:
+        //         mapTileClass = " floor";
+        //         break;
+        //     case MapTiles.monster:
+        //         mapTileClass = " monster";
+        //         break;
+        //     case MapTiles.corridor:
+        //         mapTileClass = " corridor";
+        //         break;
+        //     case MapTiles.monster:
+        //         mapTileClass = " monster";
+        //         break;
+        //     case MapTiles.player:
+        //         mapTileClass = " player";
+        //         break;
+        //     case MapTiles.weapon:
+        //         mapTileClass = " weapon";
+        //         break;
+        //     case MapTiles.health:
+        //         mapTileClass = " health";
+        //         break;
+        //     case MapTiles.stairs:
+        //         mapTileClass = " stairs";
+        //         break;
+        //     default:
+        //         mapTileClass = "";
+        //         break;
+        // }     
+        // if (this.props.tile.name === null) {
+        //     return <div className={"board-cell" + mapTileClass}></div>
+        // }
         
         let title = this.props.tile.name + (this.props.tile.hp === undefined ? "" : "\nHP: " + this.props.tile.hp)
             + (this.props.tile.damageRoll === undefined ? "" : "\nDamage: " + this.props.tile.damageRoll);
@@ -222,7 +230,7 @@ class MapRow extends Component<any,any> {
         
         let cells = this.props.cells.map(cell =>  { 
             j++;
-            return <MapCell key={this.props.rowNumber + "_" + j} tile={cell} />; 
+            //return <MapCell key={this.props.rowNumber + "_" + j} tile={cell} />; 
         });
         return (
             <div className="board-row">
@@ -231,4 +239,4 @@ class MapRow extends Component<any,any> {
         );
     }
 }
-ReactDOM.render(<DungeonGame/>, document.getElementById("map"));
+ReactDOM.render(<DungeonGame/>, document.getElementById("playerInfo"));

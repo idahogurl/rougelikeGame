@@ -15,7 +15,7 @@ var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
 
  module.exports = {
   entry: {
-    entry: ['./app/index.js','./app/dungeon.js']
+    entry: ['./app/index.js','./app/dungeon.js','./app/common.js','./app/entities.js']
   },
   module: {
     loaders: [
@@ -24,7 +24,8 @@ var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
                 loaders: [ 'style-loader', 'css-loader', 'sass-loader' ]
             },
             {
-              test: /\.tsx|.\ts$/, 
+              //test: /\.tsx|.\ts$/, 
+              test: /.\ts$/, 
               include: __dirname + '/typescript', 
               exclude: /node_modules/, 
               loader: "typescript-loader"
