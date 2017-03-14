@@ -55,7 +55,7 @@ export class MonsterFactory
 		};
 		
 		let selectedMonsters:Monster[] = [];
-		//get the monsters less than or equal to the dungeon level
+		//TODO: get the monsters 2 less than or equal to the dungeon level
 		for (let monster in monsters) 
 		{
 			let key = parseInt(monster);
@@ -82,35 +82,20 @@ export class MonsterFactory
 	}
 }
 
-export class Entity
+export abstract class Entity
 {
 	name: string;
 	location: Point;
-	color:number;	
-	//title: string; ???
+	className:string;	
+	tooltip: string;
 	
 	constructor(name:string) {
 		this.name = name;
 	}
-	paint(graphics:PIXI.Graphics, square:number) {
-		graphics.beginFill(this.color); // Red
-		graphics.lineStyle(0);
-		graphics.drawRect(this.location.x * square, this.location.y * square,
-                1 * square, 1 * square);
-		graphics.endFill();
-	}
+	abstract interact(player:Player):boolean;
 }
-// export class Tile implements MapObj 
-// {
-// 	name: string;
-// 	symbol: string;
 
-// 	constructor(name:string, symbol: string) {
-// 		this.name = name;
-// 		this.symbol = symbol;
-// 	}
-// }
-class Creature extends Entity
+abstract class Creature extends Entity
 {
 	hp: number;
 	xp: number;    
@@ -133,13 +118,23 @@ export class Monster extends Creature {
 		
 		this.hpRoll = hpRoll;
 		this.damageRoll = damageRoll;
-		this.color = 0xFF0000;
+		this.className = "monster";		
 	}
 	calcHp() {
 		this.hp = Dice.roll(this.hpRoll);
+		this.tooltip =  this.name + "\nHP: " + this.hp + "\nDamage: " + this.damageRoll;
+	}
+	interact(player:Player):boolean
+	{
+		player.attack(this);
+		
+		if (this.hp <= 0)
+		{
+			return true;
+		}
 	}
 }
-class Player extends Creature {
+export class Player extends Creature {
 /*
 You start at level 1 and can reach a maximum level of 30.
 */
@@ -147,18 +142,21 @@ You start at level 1 and can reach a maximum level of 30.
 	experinceLevels: number[];
 	weapon:Weapon;
 	location: Point;
-	damageTaken: number;	
+	damageTaken: number;
 
-	constructor(name:string, xp:number, level:number, weapon:Weapon) {
-		super(name, xp, level);		
-
-		this.weapon = weapon;
-		this.color = 0x00FF00;
+	constructor() {
+		super("You", 0, 1);		
+		
+		this.weapon = new Weapon("1d3", "Stick", 1);
+        
+		this.className = "player";
 		this.hp = 12;		
 		this.experinceLevels = [
 			0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
 			1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
 		];
+
+		this.tooltip = this.name;
 	}
 	addHealth(increase: number) {
 		this.hp += increase;		
@@ -202,19 +200,31 @@ You start at level 1 and can reach a maximum level of 30.
 
 		this.level = level;	
 	}
+	interact():boolean
+	{
+		return true;
+	}
 }
 export class HealthPotion extends Entity
 {
     hpRoll;
 	hp: number;
 
-	constructor() {
+	constructor() 
+	{
 		super("Health Potion");
 		
 		this.hpRoll = "8d4";
-		this.color = 0x00FF00;
+		this.className = "health";
 		this.hp = Dice.roll(this.hpRoll);
+
+		this.tooltip = this.name + "\nHP: " + this.hp;
 	}	
+	interact(player:Player):boolean
+	{
+		player.hp += this.hp;
+		return true;
+	}
 }
 export class Weapon extends Entity
 {
@@ -227,8 +237,51 @@ export class Weapon extends Entity
 		super(name);
         this.damageRoll = damageRoll;		
 		this.level = level;
-		this.color = 0xF39C12;
+		this.className = "weapon";
+
+		this.tooltip = this.name + "\nDamage: " + this.damageRoll;
     }
+	interact(player:Player):boolean
+	{
+		player.weapon = this;
+		return true;
+	}
+}
+export class Stairs extends Entity
+{
+	constructor()
+	{
+		super(null);
+		this.className = "stairs";
+		this.tooltip = "Stairs";
+	}
+	interact():boolean
+	{
+		return true;
+	}
+}
+export class Empty extends Entity
+{
+	constructor()
+	{
+		super(null);
+	}
+	interact():boolean
+	{
+		return false;
+	}
+}
+export class Floor extends Entity
+{
+	constructor()
+	{
+		super(null);
+		this.className = "floor";
+	}
+	interact():boolean
+	{
+		return true;
+	}
 }
 class Dice {
     static roll(value):number {

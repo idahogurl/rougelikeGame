@@ -1,12 +1,9 @@
-//https://www.goose.ninja/tutorials/pixi-js/keyboard-events/
 //https://eskerda.com/bsp-dungeon-generation/
 let MAP_SIZE = 50;
-let SQUARE = 800 / MAP_SIZE;
 let W_RATIO = 0.45;
 let H_RATIO = 0.45;
 let DISCARD_BY_RATIO = true;
 
-import * as PIXI from 'pixi.js';
 import * as Dungeon from './entities';
 import {Random,Point} from './common';
 
@@ -21,7 +18,6 @@ class Room
 	healthPotion:Dungeon.HealthPotion;
 	weapon:Dungeon.Weapon;
 	usedPoints:string[];
-    //stairs:Tile;
     
     constructor(x, y, w, h) 
     {
@@ -29,7 +25,7 @@ class Room
         this.y = y;
         this.w = w;
         this.h = h;
-        this.center = new Point(this.x + this.w/2, this.y + this.h/2);
+        this.center = new Point(this.x + Math.floor(this.w/2), Math.floor(this.y + this.h/2));
         this.usedPoints = [];
     }
     addMonster(level: number):boolean
@@ -73,25 +69,18 @@ class Room
         }
         return new Point(x,y);
     }
-    paint(graphics:PIXI.Graphics) 
+    addRoom(mapTiles:Dungeon.Entity[][]) 
     {
-        graphics.beginFill(0x9C640C); // Brown
-		graphics.drawRect(this.x * SQUARE, this.y * SQUARE,
-                this.w * SQUARE, this.h * SQUARE);
-		graphics.endFill();       
-    }
-    drawPath(graphics:PIXI.Graphics, point:Point)
-    {
-        graphics.beginFill(0x9C640C);
-        graphics.lineStyle(SQUARE, 0x9C640C);
-        graphics.moveTo(this.center.x * SQUARE, this.center.y * SQUARE);
-        graphics.lineTo(point.x * SQUARE, point.y * SQUARE);
-        graphics.endFill();       
-    }
-    drawEntities(graphics:PIXI.Graphics) {
-        if (this.monster !== undefined) this.monster.paint(graphics, SQUARE);
         
-        if (this.healthPotion !== undefined) this.healthPotion.paint(graphics, SQUARE);
+        for (let x = this.x; x <= this.w; x++)
+           for (let y = this.y; x <= this.h; y++)
+                mapTiles[x][y] = new Dungeon.Floor();
+    }
+    addPath(mapTiles:Dungeon.Entity[][], point:Point)
+    {
+        for (let y = this.center.y; y <= point.y; y++)
+            for (let x = this.center.x; x <= point.x; x++)
+                mapTiles[y][x] = new Dungeon.Floor();
     }
 }
 
@@ -99,11 +88,11 @@ class RoomContainer extends Room {
     room: Room;
     constructor(x, y, w, h) 
     {
-        super(x, y, w, h);        
+        super(x, y, w, h);
     }
     growRoom() 
     {
-        //debugger;
+        //
         let x, y, w, h;
         x = this.x + Random.next(0, Math.floor(this.w/3));
         y = this.y + Random.next(0, Math.floor(this.h/3));
@@ -130,53 +119,55 @@ class Tree {
         else
             return [].concat(this.lchild.getLeafs(), this.rchild.getLeafs());
     }
-    paint(graphics:PIXI.Graphics) 
+    add(mapTiles:Dungeon.Entity[][]) 
     {
-        this.leaf.paint(graphics);
+        this.leaf.addRoom(mapTiles);
         if (this.lchild !== undefined)
-            this.lchild.paint(graphics);
+            this.lchild.add(mapTiles);
         if (this.rchild !== undefined)
-            this.rchild.paint(graphics);
+            this.rchild.add(mapTiles);
     }
 }
 
 export class Map {
     private N_ITERATIONS = 4;
-    
-    pixiApp: PIXI.Application;
-	graphics: PIXI.Graphics;
-    entityGraphics: PIXI.Graphics;
+        
     mapElement: HTMLElement;
-
-    width:number;
-    height:number;
+   
     rooms:Room[];
     roomTree:Tree;
-    level: number;
-    entities: Dungeon.Entity[];
+    level: number = 1;
 
-    constructor(width:number, height:number, mapElement:HTMLElement) 
+    weapon:Dungeon.Weapon;
+    stairs:Dungeon.Entity;
+    player:Dungeon.Player;
+    tileMap:Dungeon.Entity[][];
+
+    generate() 
     {
-        this.mapElement = mapElement;
-        this.width = width;
-        this.height = height;
         this.rooms = [];
-        this.entities = [];
+        this.tileMap = new Array(MAP_SIZE);
         
-        this.init();
-    }
-    init() 
-    {
-        this.level = 1;
+        this.initTileMap();
 
-        this.pixiApp = new PIXI.Application(this.width, this.height, {backgroundColor : 0x000000});
-        this.graphics = new PIXI.Graphics();
-        this.entityGraphics = new PIXI.Graphics();
-                
         let main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);
+
         this.growRooms();
+
+        this.addPaths(this.roomTree);
         this.addEntities();
+    }
+    initTileMap()
+    {
+        for (let y = 0; y <= MAP_SIZE; y++)
+        {
+            this.tileMap[y] = new Array<Dungeon.Empty>(MAP_SIZE);
+            
+            for (let x = 0; x <= MAP_SIZE; x++)
+                this.tileMap[y][x] = new Dungeon.Empty();
+        }
+            
     }
     random_split(room): RoomContainer[]
     {
@@ -225,7 +216,6 @@ export class Map {
     split_room(room: RoomContainer, iter:number):Tree
     {
         let root = new Tree(room)
-        //room.paint(this.graphics);
 
         if (iter != 0) 
         {
@@ -241,69 +231,64 @@ export class Map {
         for (let i = 0; i < leafs.length; i++) {
             leafs[i].growRoom();
             this.rooms.push(leafs[i].room);
+
+            this.addRoom(leafs[i].room);
         }
     }
+    addRoom(room: Room)
+    {
+        for (let y = room.y; y < room.y + room.h; y++)
+            for (let x = room.x; x < room.x + room.w; x++)
+                this.tileMap[y][x] = new Dungeon.Floor();
+    }
     addEntities() {
-        debugger;
         for (let i = 0; i < this.rooms.length; i++) 
         {
             let room = this.rooms[i];
-            if (room.addMonster(this.level)) this.entities[room.monster.location.toString()] = room.monster;
+            if (room.addMonster(this.level)) this.tileMap[room.monster.location.y][room.monster.location.x] = room.monster;
                 
-            if (room.addHealthPotion()) this.entities[room.healthPotion.location.toString()] = room.healthPotion;
+            if (room.addHealthPotion()) this.tileMap[room.healthPotion.location.y][room.healthPotion.location.x] = room.healthPotion;
+        }   
 
-            //add one weapon
-            //add one set of stairs
-            //add player
-        }        
+        //add one weapon
+        //TODO: stop adding weapons after the player collects the best weapon
+        this.weapon = Dungeon.WeaponFactory.get(this.level);
+        this.weapon.location = this.getRandomPoint();
+        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
+
+        //add one set of stairs
+        this.stairs = new Dungeon.Stairs();
+        this.stairs.location = this.getRandomPoint();
+        this.tileMap[this.stairs.location.y][this.stairs.location.x] = this.stairs;
+
+        if (this.level === 1)
+        {
+            this.player = new Dungeon.Player();            
+        }
+
+        let startPoint = this.getRandomPoint();
+        this.player.location = startPoint;
+        this.tileMap[startPoint.y][startPoint.x] = this.player;
+
     }
-    clear() 
+    getRandomPoint():Point
     {
-        this.graphics.beginFill(0x000000, 0); // black
-        this.graphics.drawRect(0, 0, this.width, this.height);
-        this.graphics.endFill();
-
-        this.entityGraphics.beginFill(0x000000, 0); // black
-        this.entityGraphics.drawRect(0, 0, this.width, this.height);
-        this.entityGraphics.endFill();      
+        let room = this.rooms[Random.next(0, this.rooms.length - 1)];
+        return room.unusedPoint();
     }
-    drawPaths(tree) 
+    addPaths(tree) 
     {
         if (tree.lchild !== undefined && tree.rchild !== undefined) {
-            tree.lchild.leaf.drawPath(this.graphics, tree.rchild.leaf.center)
-            this.drawPaths(tree.lchild);
-            this.drawPaths(tree.rchild);
+            
+            tree.lchild.leaf.addPath(this.tileMap, tree.rchild.leaf.center)
+            this.addPaths(tree.lchild);
+            this.addPaths(tree.rchild);
         }
     }
-    drawEntities() {
-        //debugger;
-        let leafs = this.roomTree.getLeafs();
-         for (let i = 0; i < leafs.length; i++)
-           leafs[i].room.drawEntities(this.entityGraphics);
-    }
-    drawContainers()
+    addRooms()
     {
-        this.roomTree.paint(this.graphics);
-    }
-    drawRooms()
-    {
-        //debugger;
+        //
         for (let i = 0; i < this.rooms.length; i++)
-            this.rooms[i].paint(this.graphics);
-    }    
-    paint()
-    {
-        this.clear()
-        //this.drawGrid();
-        //this.drawContainers();
-        this.drawRooms();
-        this.drawPaths(this.roomTree);
-        this.drawEntities();    
-        
-        
-        this.pixiApp.stage.addChild(this.graphics);
-        this.pixiApp.stage.addChild(this.entityGraphics);
-
-        this.mapElement.appendChild(this.pixiApp.view);
+            this.rooms[i].addRoom(this.tileMap);
     }
 }

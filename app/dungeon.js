@@ -4,24 +4,20 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-//https://www.goose.ninja/tutorials/pixi-js/keyboard-events/
 //https://eskerda.com/bsp-dungeon-generation/
 var MAP_SIZE = 50;
-var SQUARE = 800 / MAP_SIZE;
 var W_RATIO = 0.45;
 var H_RATIO = 0.45;
 var DISCARD_BY_RATIO = true;
-var PIXI = require("pixi.js");
 var Dungeon = require("./entities");
 var common_1 = require("./common");
 var Room = (function () {
-    //stairs:Tile;
     function Room(x, y, w, h) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
-        this.center = new common_1.Point(this.x + this.w / 2, this.y + this.h / 2);
+        this.center = new common_1.Point(this.x + Math.floor(this.w / 2), Math.floor(this.y + this.h / 2));
         this.usedPoints = [];
     }
     Room.prototype.addMonster = function (level) {
@@ -57,23 +53,15 @@ var Room = (function () {
         }
         return new common_1.Point(x, y);
     };
-    Room.prototype.paint = function (graphics) {
-        graphics.beginFill(0x9C640C); // Brown
-        graphics.drawRect(this.x * SQUARE, this.y * SQUARE, this.w * SQUARE, this.h * SQUARE);
-        graphics.endFill();
+    Room.prototype.addRoom = function (mapTiles) {
+        for (var x = this.x; x <= this.w; x++)
+            for (var y = this.y; x <= this.h; y++)
+                mapTiles[x][y] = new Dungeon.Floor();
     };
-    Room.prototype.drawPath = function (graphics, point) {
-        graphics.beginFill(0x9C640C);
-        graphics.lineStyle(SQUARE, 0x9C640C);
-        graphics.moveTo(this.center.x * SQUARE, this.center.y * SQUARE);
-        graphics.lineTo(point.x * SQUARE, point.y * SQUARE);
-        graphics.endFill();
-    };
-    Room.prototype.drawEntities = function (graphics) {
-        if (this.monster !== undefined)
-            this.monster.paint(graphics, SQUARE);
-        if (this.healthPotion !== undefined)
-            this.healthPotion.paint(graphics, SQUARE);
+    Room.prototype.addPath = function (mapTiles, point) {
+        for (var y = this.center.y; y <= point.y; y++)
+            for (var x = this.center.x; x <= point.x; x++)
+                mapTiles[y][x] = new Dungeon.Floor();
     };
     return Room;
 }());
@@ -83,7 +71,7 @@ var RoomContainer = (function (_super) {
         return _super.call(this, x, y, w, h) || this;
     }
     RoomContainer.prototype.growRoom = function () {
-        //debugger;
+        //
         var x, y, w, h;
         x = this.x + common_1.Random.next(0, Math.floor(this.w / 3));
         y = this.y + common_1.Random.next(0, Math.floor(this.h / 3));
@@ -105,34 +93,36 @@ var Tree = (function () {
         else
             return [].concat(this.lchild.getLeafs(), this.rchild.getLeafs());
     };
-    Tree.prototype.paint = function (graphics) {
-        this.leaf.paint(graphics);
+    Tree.prototype.add = function (mapTiles) {
+        this.leaf.addRoom(mapTiles);
         if (this.lchild !== undefined)
-            this.lchild.paint(graphics);
+            this.lchild.add(mapTiles);
         if (this.rchild !== undefined)
-            this.rchild.paint(graphics);
+            this.rchild.add(mapTiles);
     };
     return Tree;
 }());
 var Map = (function () {
-    function Map(width, height, mapElement) {
+    function Map() {
         this.N_ITERATIONS = 4;
-        this.mapElement = mapElement;
-        this.width = width;
-        this.height = height;
-        this.rooms = [];
-        this.entities = [];
-        this.init();
-    }
-    Map.prototype.init = function () {
         this.level = 1;
-        this.pixiApp = new PIXI.Application(this.width, this.height, { backgroundColor: 0x000000 });
-        this.graphics = new PIXI.Graphics();
-        this.entityGraphics = new PIXI.Graphics();
+    }
+    Map.prototype.generate = function () {
+        this.rooms = [];
+        this.tileMap = new Array(MAP_SIZE);
+        this.initTileMap();
         var main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);
         this.growRooms();
+        this.addPaths(this.roomTree);
         this.addEntities();
+    };
+    Map.prototype.initTileMap = function () {
+        for (var y = 0; y <= MAP_SIZE; y++) {
+            this.tileMap[y] = new Array(MAP_SIZE);
+            for (var x = 0; x <= MAP_SIZE; x++)
+                this.tileMap[y][x] = new Dungeon.Empty();
+        }
     };
     Map.prototype.random_split = function (room) {
         var r1, r2;
@@ -172,7 +162,6 @@ var Map = (function () {
     };
     Map.prototype.split_room = function (room, iter) {
         var root = new Tree(room);
-        //room.paint(this.graphics);
         if (iter != 0) {
             var sr = this.random_split(room);
             root.lchild = this.split_room(sr[0], iter - 1);
@@ -185,57 +174,53 @@ var Map = (function () {
         for (var i = 0; i < leafs.length; i++) {
             leafs[i].growRoom();
             this.rooms.push(leafs[i].room);
+            this.addRoom(leafs[i].room);
         }
     };
+    Map.prototype.addRoom = function (room) {
+        for (var y = room.y; y < room.y + room.h; y++)
+            for (var x = room.x; x < room.x + room.w; x++)
+                this.tileMap[y][x] = new Dungeon.Floor();
+    };
     Map.prototype.addEntities = function () {
-        debugger;
         for (var i = 0; i < this.rooms.length; i++) {
             var room = this.rooms[i];
             if (room.addMonster(this.level))
-                this.entities[room.monster.location.toString()] = room.monster;
+                this.tileMap[room.monster.location.y][room.monster.location.x] = room.monster;
             if (room.addHealthPotion())
-                this.entities[room.healthPotion.location.toString()] = room.healthPotion;
+                this.tileMap[room.healthPotion.location.y][room.healthPotion.location.x] = room.healthPotion;
         }
+        //add one weapon
+        //TODO: stop adding weapons after the player collects the best weapon
+        this.weapon = Dungeon.WeaponFactory.get(this.level);
+        this.weapon.location = this.getRandomPoint();
+        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
+        //add one set of stairs
+        this.stairs = new Dungeon.Stairs();
+        this.stairs.location = this.getRandomPoint();
+        this.tileMap[this.stairs.location.y][this.stairs.location.x] = this.stairs;
+        if (this.level === 1) {
+            this.player = new Dungeon.Player();
+        }
+        var startPoint = this.getRandomPoint();
+        this.player.location = startPoint;
+        this.tileMap[startPoint.y][startPoint.x] = this.player;
     };
-    Map.prototype.clear = function () {
-        this.graphics.beginFill(0x000000, 0); // black
-        this.graphics.drawRect(0, 0, this.width, this.height);
-        this.graphics.endFill();
-        this.entityGraphics.beginFill(0x000000, 0); // black
-        this.entityGraphics.drawRect(0, 0, this.width, this.height);
-        this.entityGraphics.endFill();
+    Map.prototype.getRandomPoint = function () {
+        var room = this.rooms[common_1.Random.next(0, this.rooms.length - 1)];
+        return room.unusedPoint();
     };
-    Map.prototype.drawPaths = function (tree) {
+    Map.prototype.addPaths = function (tree) {
         if (tree.lchild !== undefined && tree.rchild !== undefined) {
-            tree.lchild.leaf.drawPath(this.graphics, tree.rchild.leaf.center);
-            this.drawPaths(tree.lchild);
-            this.drawPaths(tree.rchild);
+            tree.lchild.leaf.addPath(this.tileMap, tree.rchild.leaf.center);
+            this.addPaths(tree.lchild);
+            this.addPaths(tree.rchild);
         }
     };
-    Map.prototype.drawEntities = function () {
-        //debugger;
-        var leafs = this.roomTree.getLeafs();
-        for (var i = 0; i < leafs.length; i++)
-            leafs[i].room.drawEntities(this.entityGraphics);
-    };
-    Map.prototype.drawContainers = function () {
-        this.roomTree.paint(this.graphics);
-    };
-    Map.prototype.drawRooms = function () {
-        //debugger;
+    Map.prototype.addRooms = function () {
+        //
         for (var i = 0; i < this.rooms.length; i++)
-            this.rooms[i].paint(this.graphics);
-    };
-    Map.prototype.paint = function () {
-        this.clear();
-        //this.drawGrid();
-        //this.drawContainers();
-        this.drawRooms();
-        this.drawPaths(this.roomTree);
-        this.drawEntities();
-        this.pixiApp.stage.addChild(this.graphics);
-        this.pixiApp.stage.addChild(this.entityGraphics);
-        this.mapElement.appendChild(this.pixiApp.view);
+            this.rooms[i].addRoom(this.tileMap);
     };
     return Map;
 }());

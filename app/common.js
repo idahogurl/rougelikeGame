@@ -19,19 +19,3 @@ var Point = (function () {
     return Point;
 }());
 exports.Point = Point;
-var MapTiles = (function () {
-    function MapTiles() {
-    }
-    return MapTiles;
-}());
-MapTiles.empty = "";
-MapTiles.floor = "_";
-MapTiles.wall = "|";
-MapTiles.corridor = "#";
-MapTiles.stairs = "S";
-MapTiles.door = "D";
-MapTiles.health = "H";
-MapTiles.weapon = "W";
-MapTiles.monster = "M";
-MapTiles.player = "P";
-exports.MapTiles = MapTiles;

@@ -62,7 +62,7 @@ var MonsterFactory = (function () {
             20: new Monster("Griffin", 2000, 20, "13d8", "4d3/3d5/4d3")
         };
         var selectedMonsters = [];
-        //get the monsters less than or equal to the dungeon level
+        //TODO: get the monsters 2 less than or equal to the dungeon level
         for (var monster_1 in monsters) {
             var key = parseInt(monster_1);
             if (key <= level) {
@@ -85,28 +85,12 @@ var MonsterFactory = (function () {
 }());
 exports.MonsterFactory = MonsterFactory;
 var Entity = (function () {
-    //title: string; ???
     function Entity(name) {
         this.name = name;
     }
-    Entity.prototype.paint = function (graphics, square) {
-        graphics.beginFill(this.color); // Red
-        graphics.lineStyle(0);
-        graphics.drawRect(this.location.x * square, this.location.y * square, 1 * square, 1 * square);
-        graphics.endFill();
-    };
     return Entity;
 }());
 exports.Entity = Entity;
-// export class Tile implements MapObj 
-// {
-// 	name: string;
-// 	symbol: string;
-// 	constructor(name:string, symbol: string) {
-// 		this.name = name;
-// 		this.symbol = symbol;
-// 	}
-// }
 var Creature = (function (_super) {
     __extends(Creature, _super);
     function Creature(name, xp, level) {
@@ -123,26 +107,34 @@ var Monster = (function (_super) {
         var _this = _super.call(this, name, xp, level) || this;
         _this.hpRoll = hpRoll;
         _this.damageRoll = damageRoll;
-        _this.color = 0xFF0000;
+        _this.className = "monster";
         return _this;
     }
     Monster.prototype.calcHp = function () {
         this.hp = Dice.roll(this.hpRoll);
+        this.tooltip = this.name + "\nHP: " + this.hp + "\nDamage: " + this.damageRoll;
+    };
+    Monster.prototype.interact = function (player) {
+        player.attack(this);
+        if (this.hp <= 0) {
+            return true;
+        }
     };
     return Monster;
 }(Creature));
 exports.Monster = Monster;
 var Player = (function (_super) {
     __extends(Player, _super);
-    function Player(name, xp, level, weapon) {
-        var _this = _super.call(this, name, xp, level) || this;
-        _this.weapon = weapon;
-        _this.color = 0x00FF00;
+    function Player() {
+        var _this = _super.call(this, "You", 0, 1) || this;
+        _this.weapon = new Weapon("1d3", "Stick", 1);
+        _this.className = "player";
         _this.hp = 12;
         _this.experinceLevels = [
             0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
             1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
         ];
+        _this.tooltip = _this.name;
         return _this;
     }
     Player.prototype.addHealth = function (increase) {
@@ -185,17 +177,26 @@ var Player = (function (_super) {
         });
         this.level = level;
     };
+    Player.prototype.interact = function () {
+        return true;
+    };
     return Player;
 }(Creature));
+exports.Player = Player;
 var HealthPotion = (function (_super) {
     __extends(HealthPotion, _super);
     function HealthPotion() {
         var _this = _super.call(this, "Health Potion") || this;
         _this.hpRoll = "8d4";
-        _this.color = 0x00FF00;
+        _this.className = "health";
         _this.hp = Dice.roll(_this.hpRoll);
+        _this.tooltip = _this.name + "\nHP: " + _this.hp;
         return _this;
     }
+    HealthPotion.prototype.interact = function (player) {
+        player.hp += this.hp;
+        return true;
+    };
     return HealthPotion;
 }(Entity));
 exports.HealthPotion = HealthPotion;
@@ -205,12 +206,55 @@ var Weapon = (function (_super) {
         var _this = _super.call(this, name) || this;
         _this.damageRoll = damageRoll;
         _this.level = level;
-        _this.color = 0xF39C12;
+        _this.className = "weapon";
+        _this.tooltip = _this.name + "\nDamage: " + _this.damageRoll;
         return _this;
     }
+    Weapon.prototype.interact = function (player) {
+        player.weapon = this;
+        return true;
+    };
     return Weapon;
 }(Entity));
 exports.Weapon = Weapon;
+var Stairs = (function (_super) {
+    __extends(Stairs, _super);
+    function Stairs() {
+        var _this = _super.call(this, null) || this;
+        _this.className = "stairs";
+        _this.tooltip = "Stairs";
+        return _this;
+    }
+    Stairs.prototype.interact = function () {
+        return true;
+    };
+    return Stairs;
+}(Entity));
+exports.Stairs = Stairs;
+var Empty = (function (_super) {
+    __extends(Empty, _super);
+    function Empty() {
+        return _super.call(this, null) || this;
+    }
+    Empty.prototype.interact = function () {
+        return false;
+    };
+    return Empty;
+}(Entity));
+exports.Empty = Empty;
+var Floor = (function (_super) {
+    __extends(Floor, _super);
+    function Floor() {
+        var _this = _super.call(this, null) || this;
+        _this.className = "floor";
+        return _this;
+    }
+    Floor.prototype.interact = function () {
+        return true;
+    };
+    return Floor;
+}(Entity));
+exports.Floor = Floor;
 var Dice = (function () {
     function Dice() {
     }
