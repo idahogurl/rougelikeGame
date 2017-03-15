@@ -1,8 +1,9 @@
 //https://eskerda.com/bsp-dungeon-generation/
-let MAP_SIZE = 50;
+let MAP_SIZE = 30;
 let W_RATIO = 0.45;
 let H_RATIO = 0.45;
 let DISCARD_BY_RATIO = true;
+let TOTAL_MAP_SIZE = 70; //to avoid boundary checks
 
 import * as Dungeon from './entities';
 import {Random,Point} from './common';
@@ -18,8 +19,8 @@ class Room
 	healthPotion:Dungeon.HealthPotion;
 	weapon:Dungeon.Weapon;
 	usedPoints:string[];
-    
-    constructor(x, y, w, h) 
+
+    constructor(x, y, w, h)
     {
         this.x = x;
         this.y = y;
@@ -30,20 +31,20 @@ class Room
     }
     addMonster(level: number):boolean
 	{
-		if (Math.random() < 0.5) 
+		if (Math.random() < 0.5)
         {
-			this.monster = new Dungeon.MonsterFactory(level).get();
-            
+			this.monster = new Dungeon.MonsterFactory().random(level);
+
             let point = this.unusedPoint();
             this.usedPoints.push(point.toString());
             this.monster.location = point;
             return true;
-		} 
+		}
 	}
 	addHealthPotion():boolean
 	{
 		if (Math.random() < 0.25) {
-			this.healthPotion = new Dungeon.HealthPotion();	
+			this.healthPotion = new Dungeon.HealthPotion();
 
             let point = this.unusedPoint();
             this.usedPoints.push(point.toString());
@@ -58,20 +59,20 @@ class Room
         let x = Random.next(this.x + 1, this.x + this.w - 1);
         let y = Random.next(this.y + 1, this.y + this.h - 1);
         let found = false;
-    
-        while (!found) 
+
+        while (!found)
         {
             //is it empty?
             let point = x + "," + y;
             if (this.usedPoints.indexOf(point) === -1) {
-                found = true;                
+                found = true;
             }
         }
         return new Point(x,y);
     }
-    addRoom(mapTiles:Dungeon.Entity[][]) 
+    addRoom(mapTiles:Dungeon.Entity[][])
     {
-        
+
         for (let x = this.x; x <= this.w; x++)
            for (let y = this.y; x <= this.h; y++)
                 mapTiles[x][y] = new Dungeon.Floor();
@@ -86,11 +87,11 @@ class Room
 
 class RoomContainer extends Room {
     room: Room;
-    constructor(x, y, w, h) 
+    constructor(x, y, w, h)
     {
         super(x, y, w, h);
     }
-    growRoom() 
+    growRoom()
     {
         //
         let x, y, w, h;
@@ -110,16 +111,16 @@ class Tree {
     rchild: Tree;
     constructor(leaf)
     {
-        this.leaf = leaf;       
+        this.leaf = leaf;
     }
-    getLeafs() 
+    getLeafs()
     {
         if (this.lchild === undefined && this.rchild === undefined)
             return [this.leaf];
         else
             return [].concat(this.lchild.getLeafs(), this.rchild.getLeafs());
     }
-    add(mapTiles:Dungeon.Entity[][]) 
+    add(mapTiles:Dungeon.Entity[][])
     {
         this.leaf.addRoom(mapTiles);
         if (this.lchild !== undefined)
@@ -134,25 +135,27 @@ export enum GameResults
     won, lost
 }
 
-export class Map 
+export class Map
 {
-    private N_ITERATIONS = 4;
-   
+    private N_ITERATIONS = 3;
+
     rooms:Room[];
     roomTree:Tree;
-    level: number = 1;
+    level: number = 20;
     gameResults: GameResults;
 
     weapon:Dungeon.Weapon;
     stairs:Dungeon.Entity;
     player:Dungeon.Player;
     tileMap:Dungeon.Entity[][];
+    currentOpponent: Dungeon.Monster;
+    visibleTiles:string[];
 
-    generate() 
+    generate()
     {
         this.rooms = [];
-        this.tileMap = new Array(MAP_SIZE);
-        
+        this.tileMap = new Array(TOTAL_MAP_SIZE);
+
         this.initTileMap();
 
         let main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
@@ -165,19 +168,19 @@ export class Map
     }
     initTileMap()
     {
-        for (let y = 0; y <= MAP_SIZE; y++)
+        for (let y = 0; y <= TOTAL_MAP_SIZE; y++)
         {
-            this.tileMap[y] = new Array<Dungeon.Empty>(MAP_SIZE);
-            
-            for (let x = 0; x <= MAP_SIZE; x++)
+            this.tileMap[y] = new Array<Dungeon.Empty>(TOTAL_MAP_SIZE);
+
+            for (let x = 0; x <= TOTAL_MAP_SIZE; x++)
                 this.tileMap[y][x] = new Dungeon.Empty();
         }
-            
+
     }
     random_split(room): RoomContainer[]
     {
         let r1, r2;
-        if (Random.next(0, 1) == 0) 
+        if (Random.next(0, 1) == 0)
         {
             // Vertical
             r1 = new RoomContainer(
@@ -196,7 +199,7 @@ export class Map
                 }
             }
         }
-        else 
+        else
         {
             // Horizontal
             r1 = new RoomContainer(
@@ -207,7 +210,7 @@ export class Map
                 room.x, room.y + r1.h,      // r2.x, r2.y
                 room.w, room.h - r1.h       // r2.w, r2.h
             );
-            if (DISCARD_BY_RATIO) 
+            if (DISCARD_BY_RATIO)
             {
                 let r1_h_ratio = r1.h / r1.w;
                 let r2_h_ratio = r2.h / r2.w;
@@ -222,7 +225,7 @@ export class Map
     {
         let root = new Tree(room)
 
-        if (iter != 0) 
+        if (iter != 0)
         {
             let sr: RoomContainer[] = this.random_split(room);
             root.lchild = this.split_room(sr[0], iter-1);
@@ -230,7 +233,7 @@ export class Map
         }
         return root;
     }
-    growRooms() 
+    growRooms()
     {
         let leafs = this.roomTree.getLeafs();
         for (let i = 0; i < leafs.length; i++) {
@@ -247,38 +250,80 @@ export class Map
                 this.tileMap[y][x] = new Dungeon.Floor();
     }
     addEntities() {
-        for (let i = 0; i < this.rooms.length; i++) 
+        for (let i = 0; i < this.rooms.length; i++)
         {
             let room = this.rooms[i];
             if (room.addMonster(this.level)) this.addToMap(room.monster, false);
-                
+
             if (room.addHealthPotion()) this.addToMap(room.healthPotion, false);
-        }   
+        }
 
         //add boss monster for final level
         if (this.level == 20)
         {
-            let bossMonster = new Dungeon.MonsterFactory(20).get();
+            let bossMonster = new Dungeon.MonsterFactory().get(20, 0);
             bossMonster.isBoss = true;
             bossMonster.className = "boss";
             this.addToMap(bossMonster, true);
         }
 
-        //add one weapon unless the player already has the best weapon
-        if (this.player.weapon.level !== 5) this.addToMap(Dungeon.WeaponFactory.get(this.level), true);
-
         //add one set of stairs
-        this.addToMap(new Dungeon.Stairs(), true);
+        if (this.level < 20)
+            this.addToMap(new Dungeon.Stairs(), true);
 
-        if (this.level === 1) this.player = new Dungeon.Player();
-        
+        if (this.player === undefined) this.player = new Dungeon.Player();
+
+        //add one weapon unless the player already has the best weapon
+        if (this.player.weapon.level < 5)
+            this.addToMap(Dungeon.WeaponFactory.get(this.level), true);
+
         this.addToMap(this.player, true);
 
+        this.setVisibleArea();
     }
     addToMap(entity:Dungeon.Entity, setRandomLocation:boolean)
     {
         if (setRandomLocation) entity.location = this.getRandomPoint();
-        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
+        this.tileMap[entity.location.y][entity.location.x] = entity;
+    }
+    setVisibleArea() {
+        this.visibleTiles = [];
+        let playerX = this.player.location.x;
+        let playerY = this.player.location.y;
+
+        let newX = playerX - 5;
+        let newY = playerY - 2;
+        let h = 5;
+        let w = 11;
+
+        for (let y = newY; y < newY + h; y++)
+        {
+            for (let x = newX; x < newX + w; x++)
+            {
+                this.tileMap[y][x].show = true;
+                 this.visibleTiles.push(x + "," + y);
+            }
+        }
+
+        let y1 = newY;
+        let y2 = newY + h - 1;
+        let x1 = newX;
+        for (let i = 0; i < 3; i++) {
+            x1++;
+            y1--; //over one, up one, width less 2
+            y2++; //over one, down one, width less 2
+
+            w -= 2;
+            for (let x = x1; x < x1 + w; x++) {
+                this.tileMap[y1][x].show = true;
+                this.visibleTiles.push(x + "," + y1);
+            }
+            for (let x = x1; x < x1 + w; x++) {
+                this.tileMap[y2][x].show = true;
+                this.visibleTiles.push(x + "," + y2);
+            }
+        }
+
     }
     getRandomPoint():Point
     {
@@ -288,10 +333,10 @@ export class Map
     {
         return this.rooms[Random.next(0, this.rooms.length - 1)];
     }
-    addPaths(tree) 
+    addPaths(tree)
     {
         if (tree.lchild !== undefined && tree.rchild !== undefined) {
-            
+
             tree.lchild.leaf.addPath(this.tileMap, tree.rchild.leaf.center)
             this.addPaths(tree.lchild);
             this.addPaths(tree.rchild);

@@ -5,10 +5,11 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 //https://eskerda.com/bsp-dungeon-generation/
-var MAP_SIZE = 50;
+var MAP_SIZE = 30;
 var W_RATIO = 0.45;
 var H_RATIO = 0.45;
 var DISCARD_BY_RATIO = true;
+var TOTAL_MAP_SIZE = 70; //to avoid boundary checks
 var Dungeon = require("./entities");
 var common_1 = require("./common");
 var Room = (function () {
@@ -22,7 +23,7 @@ var Room = (function () {
     }
     Room.prototype.addMonster = function (level) {
         if (Math.random() < 0.5) {
-            this.monster = Dungeon.MonsterFactory.random(level);
+            this.monster = new Dungeon.MonsterFactory().random(level);
             var point = this.unusedPoint();
             this.usedPoints.push(point.toString());
             this.monster.location = point;
@@ -102,14 +103,19 @@ var Tree = (function () {
     };
     return Tree;
 }());
+var GameResults;
+(function (GameResults) {
+    GameResults[GameResults["won"] = 0] = "won";
+    GameResults[GameResults["lost"] = 1] = "lost";
+})(GameResults = exports.GameResults || (exports.GameResults = {}));
 var Map = (function () {
     function Map() {
-        this.N_ITERATIONS = 4;
-        this.level = 1;
+        this.N_ITERATIONS = 3;
+        this.level = 20;
     }
     Map.prototype.generate = function () {
         this.rooms = [];
-        this.tileMap = new Array(MAP_SIZE);
+        this.tileMap = new Array(TOTAL_MAP_SIZE);
         this.initTileMap();
         var main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);
@@ -118,9 +124,9 @@ var Map = (function () {
         this.addEntities();
     };
     Map.prototype.initTileMap = function () {
-        for (var y = 0; y <= MAP_SIZE; y++) {
-            this.tileMap[y] = new Array(MAP_SIZE);
-            for (var x = 0; x <= MAP_SIZE; x++)
+        for (var y = 0; y <= TOTAL_MAP_SIZE; y++) {
+            this.tileMap[y] = new Array(TOTAL_MAP_SIZE);
+            for (var x = 0; x <= TOTAL_MAP_SIZE; x++)
                 this.tileMap[y][x] = new Dungeon.Empty();
         }
     };
@@ -186,29 +192,70 @@ var Map = (function () {
         for (var i = 0; i < this.rooms.length; i++) {
             var room = this.rooms[i];
             if (room.addMonster(this.level))
-                this.tileMap[room.monster.location.y][room.monster.location.x] = room.monster;
+                this.addToMap(room.monster, false);
             if (room.addHealthPotion())
-                this.tileMap[room.healthPotion.location.y][room.healthPotion.location.x] = room.healthPotion;
+                this.addToMap(room.healthPotion, false);
         }
-        //add one weapon
-        //TODO: stop adding weapons after the player collects the best weapon
-        this.weapon = Dungeon.WeaponFactory.get(this.level);
-        this.weapon.location = this.getRandomPoint();
-        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
+        //add boss monster for final level
+        if (this.level == 20) {
+            var bossMonster = new Dungeon.MonsterFactory().get(20, 0);
+            bossMonster.isBoss = true;
+            bossMonster.className = "boss";
+            this.addToMap(bossMonster, true);
+        }
         //add one set of stairs
-        this.stairs = new Dungeon.Stairs();
-        this.stairs.location = this.getRandomPoint();
-        this.tileMap[this.stairs.location.y][this.stairs.location.x] = this.stairs;
-        if (this.level === 1) {
+        if (this.level < 20)
+            this.addToMap(new Dungeon.Stairs(), true);
+        if (this.player === undefined)
             this.player = new Dungeon.Player();
+        //add one weapon unless the player already has the best weapon
+        if (this.player.weapon.level < 5)
+            this.addToMap(Dungeon.WeaponFactory.get(this.level), true);
+        this.addToMap(this.player, true);
+        this.setVisibleArea();
+    };
+    Map.prototype.addToMap = function (entity, setRandomLocation) {
+        if (setRandomLocation)
+            entity.location = this.getRandomPoint();
+        this.tileMap[entity.location.y][entity.location.x] = entity;
+    };
+    Map.prototype.setVisibleArea = function () {
+        this.visibleTiles = [];
+        var playerX = this.player.location.x;
+        var playerY = this.player.location.y;
+        var newX = playerX - 5;
+        var newY = playerY - 2;
+        var h = 5;
+        var w = 11;
+        for (var y = newY; y < newY + h; y++) {
+            for (var x = newX; x < newX + w; x++) {
+                this.tileMap[y][x].show = true;
+                this.visibleTiles.push(x + "," + y);
+            }
         }
-        var startPoint = this.getRandomPoint();
-        this.player.location = startPoint;
-        this.tileMap[startPoint.y][startPoint.x] = this.player;
+        var y1 = newY;
+        var y2 = newY + h - 1;
+        var x1 = newX;
+        for (var i = 0; i < 3; i++) {
+            x1++;
+            y1--; //over one, up one, width less 2
+            y2++; //over one, down one, width less 2
+            w -= 2;
+            for (var x = x1; x < x1 + w; x++) {
+                this.tileMap[y1][x].show = true;
+                this.visibleTiles.push(x + "," + y1);
+            }
+            for (var x = x1; x < x1 + w; x++) {
+                this.tileMap[y2][x].show = true;
+                this.visibleTiles.push(x + "," + y2);
+            }
+        }
     };
     Map.prototype.getRandomPoint = function () {
-        var room = this.rooms[common_1.Random.next(0, this.rooms.length - 1)];
-        return room.unusedPoint();
+        return this.getRandomRoom().unusedPoint();
+    };
+    Map.prototype.getRandomRoom = function () {
+        return this.rooms[common_1.Random.next(0, this.rooms.length - 1)];
     };
     Map.prototype.addPaths = function (tree) {
         if (tree.lchild !== undefined && tree.rchild !== undefined) {

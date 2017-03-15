@@ -4832,9 +4832,7 @@ var WeaponFactory = (function () {
 exports.WeaponFactory = WeaponFactory;
 var MonsterFactory = (function () {
     function MonsterFactory() {
-    }
-    MonsterFactory.random = function (level) {
-        var monsters = {
+        this.monsters = {
             1: [
                 new Monster("Bat", 1, 1, "1d8", "1d2"),
                 new Monster("Emu", 2, 1, "1d8", "1d2"),
@@ -4870,18 +4868,32 @@ var MonsterFactory = (function () {
             15: new Monster("Jabberwock", 3000, 15, "15d8", "2d12/2d4"),
             20: new Monster("Griffin", 2000, 20, "13d8", "4d3/3d5/4d3")
         };
+    }
+    //get a monster at the specified index and specified level
+    MonsterFactory.prototype.get = function (level, index) {
+        var monster;
+        if (Array.isArray(this.monsters[level])) {
+            monster = this.monsters[level][index];
+        }
+        else {
+            monster = this.monsters[level];
+        }
+        monster.calcHp();
+        return monster;
+    };
+    MonsterFactory.prototype.random = function (level) {
         var selectedMonsters = [];
-        //TODO: get the monsters 2 less than or equal to the dungeon level
-        for (var monster_1 in monsters) {
+        //get the monsters in levels 5 less than or equal to the current dungeon level
+        for (var monster_1 in this.monsters) {
             var key = parseInt(monster_1);
-            if (key <= level) {
-                if (Array.isArray(monsters[key])) {
-                    monsters[key].forEach(function (m) {
+            if (key >= level - 5) {
+                if (Array.isArray(this.monsters[level])) {
+                    this.monsters[level].forEach(function (m) {
                         selectedMonsters.push(m);
                     });
                 }
                 else {
-                    selectedMonsters.push(monsters[key]);
+                    selectedMonsters.push(this.monsters[level]);
                 }
             }
         }
@@ -4925,9 +4937,9 @@ var Monster = (function (_super) {
     };
     Monster.prototype.interact = function (player) {
         player.attack(this);
-        if (this.hp <= 0) {
+        if (this.hp <= 0)
             return true;
-        }
+        return false;
     };
     return Monster;
 }(Creature));
@@ -4936,9 +4948,9 @@ var Player = (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, "You", 0, 1) || this;
-        _this.weapon = new Weapon("1d3", "Stick", 1);
+        _this.weapon = new Weapon("5d20", "Stick", 5);
         _this.className = "player";
-        _this.hp = 12;
+        _this.hp = 500;
         _this.experinceLevels = [
             0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
             1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
@@ -4972,7 +4984,8 @@ var Player = (function (_super) {
         opponent.hp -= this.weapon.damage;
         this.damageTaken = opponent.damage;
         this.hp -= opponent.damage;
-        this.gainXp(opponent.xp);
+        if (opponent.hp <= 0)
+            this.gainXp(opponent.xp);
     };
     Player.prototype.gainXp = function (xp) {
         var _this = this;
@@ -5073,7 +5086,6 @@ var Dice = (function () {
         var rolls = value.split("/");
         rolls.forEach(function (r) {
             var temp = value.split("d");
-            //debugger;
             var timesRoll = parseInt(temp[0]);
             var dieSides = parseInt(temp[1]);
             for (var i = 0; i < timesRoll; i++) {
@@ -7316,10 +7328,11 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 //https://eskerda.com/bsp-dungeon-generation/
-var MAP_SIZE = 50;
+var MAP_SIZE = 30;
 var W_RATIO = 0.45;
 var H_RATIO = 0.45;
 var DISCARD_BY_RATIO = true;
+var TOTAL_MAP_SIZE = 70; //to avoid boundary checks
 var Dungeon = __webpack_require__(34);
 var common_1 = __webpack_require__(33);
 var Room = (function () {
@@ -7333,7 +7346,7 @@ var Room = (function () {
     }
     Room.prototype.addMonster = function (level) {
         if (Math.random() < 0.5) {
-            this.monster = Dungeon.MonsterFactory.random(level);
+            this.monster = new Dungeon.MonsterFactory().random(level);
             var point = this.unusedPoint();
             this.usedPoints.push(point.toString());
             this.monster.location = point;
@@ -7413,14 +7426,19 @@ var Tree = (function () {
     };
     return Tree;
 }());
+var GameResults;
+(function (GameResults) {
+    GameResults[GameResults["won"] = 0] = "won";
+    GameResults[GameResults["lost"] = 1] = "lost";
+})(GameResults = exports.GameResults || (exports.GameResults = {}));
 var Map = (function () {
     function Map() {
-        this.N_ITERATIONS = 4;
-        this.level = 1;
+        this.N_ITERATIONS = 3;
+        this.level = 20;
     }
     Map.prototype.generate = function () {
         this.rooms = [];
-        this.tileMap = new Array(MAP_SIZE);
+        this.tileMap = new Array(TOTAL_MAP_SIZE);
         this.initTileMap();
         var main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);
@@ -7429,9 +7447,9 @@ var Map = (function () {
         this.addEntities();
     };
     Map.prototype.initTileMap = function () {
-        for (var y = 0; y <= MAP_SIZE; y++) {
-            this.tileMap[y] = new Array(MAP_SIZE);
-            for (var x = 0; x <= MAP_SIZE; x++)
+        for (var y = 0; y <= TOTAL_MAP_SIZE; y++) {
+            this.tileMap[y] = new Array(TOTAL_MAP_SIZE);
+            for (var x = 0; x <= TOTAL_MAP_SIZE; x++)
                 this.tileMap[y][x] = new Dungeon.Empty();
         }
     };
@@ -7497,29 +7515,70 @@ var Map = (function () {
         for (var i = 0; i < this.rooms.length; i++) {
             var room = this.rooms[i];
             if (room.addMonster(this.level))
-                this.tileMap[room.monster.location.y][room.monster.location.x] = room.monster;
+                this.addToMap(room.monster, false);
             if (room.addHealthPotion())
-                this.tileMap[room.healthPotion.location.y][room.healthPotion.location.x] = room.healthPotion;
+                this.addToMap(room.healthPotion, false);
         }
-        //add one weapon
-        //TODO: stop adding weapons after the player collects the best weapon
-        this.weapon = Dungeon.WeaponFactory.get(this.level);
-        this.weapon.location = this.getRandomPoint();
-        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
+        //add boss monster for final level
+        if (this.level == 20) {
+            var bossMonster = new Dungeon.MonsterFactory().get(20, 0);
+            bossMonster.isBoss = true;
+            bossMonster.className = "boss";
+            this.addToMap(bossMonster, true);
+        }
         //add one set of stairs
-        this.stairs = new Dungeon.Stairs();
-        this.stairs.location = this.getRandomPoint();
-        this.tileMap[this.stairs.location.y][this.stairs.location.x] = this.stairs;
-        if (this.level === 1) {
+        if (this.level < 20)
+            this.addToMap(new Dungeon.Stairs(), true);
+        if (this.player === undefined)
             this.player = new Dungeon.Player();
+        //add one weapon unless the player already has the best weapon
+        if (this.player.weapon.level < 5)
+            this.addToMap(Dungeon.WeaponFactory.get(this.level), true);
+        this.addToMap(this.player, true);
+        this.setVisibleArea();
+    };
+    Map.prototype.addToMap = function (entity, setRandomLocation) {
+        if (setRandomLocation)
+            entity.location = this.getRandomPoint();
+        this.tileMap[entity.location.y][entity.location.x] = entity;
+    };
+    Map.prototype.setVisibleArea = function () {
+        this.visibleTiles = [];
+        var playerX = this.player.location.x;
+        var playerY = this.player.location.y;
+        var newX = playerX - 5;
+        var newY = playerY - 2;
+        var h = 5;
+        var w = 11;
+        for (var y = newY; y < newY + h; y++) {
+            for (var x = newX; x < newX + w; x++) {
+                this.tileMap[y][x].show = true;
+                this.visibleTiles.push(x + "," + y);
+            }
         }
-        var startPoint = this.getRandomPoint();
-        this.player.location = startPoint;
-        this.tileMap[startPoint.y][startPoint.x] = this.player;
+        var y1 = newY;
+        var y2 = newY + h - 1;
+        var x1 = newX;
+        for (var i = 0; i < 3; i++) {
+            x1++;
+            y1--; //over one, up one, width less 2
+            y2++; //over one, down one, width less 2
+            w -= 2;
+            for (var x = x1; x < x1 + w; x++) {
+                this.tileMap[y1][x].show = true;
+                this.visibleTiles.push(x + "," + y1);
+            }
+            for (var x = x1; x < x1 + w; x++) {
+                this.tileMap[y2][x].show = true;
+                this.visibleTiles.push(x + "," + y2);
+            }
+        }
     };
     Map.prototype.getRandomPoint = function () {
-        var room = this.rooms[common_1.Random.next(0, this.rooms.length - 1)];
-        return room.unusedPoint();
+        return this.getRandomRoom().unusedPoint();
+    };
+    Map.prototype.getRandomRoom = function () {
+        return this.rooms[common_1.Random.next(0, this.rooms.length - 1)];
     };
     Map.prototype.addPaths = function (tree) {
         if (tree.lchild !== undefined && tree.rchild !== undefined) {
@@ -10292,23 +10351,23 @@ module.exports = __webpack_require__(21);
 /*
 //http://www.rots.net/rogue/monsters.html
 
-User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
+x User Story: I have health, a level, and a weapon. I can pick up a better weapon. I can pick up health items.
 
-User Story: All the items and enemies on the map are arranged at random.
+x User Story: All the items and enemies on the map are arranged at random.
 
-User Story: I can move throughout a map, discovering items.
+x User Story: I can move throughout a map, discovering items.
 
-User Story: I can move anywhere within the map's boundaries, but I can't move through an enemy until I've beaten it.
+x User Story: I can move anywhere within the map's boundaries, but I can't move through an enemy until I've beaten it.
 
 User Story: Much of the map is hidden. When I take a step, all spaces that are within a certain number of spaces from me are revealed.
 
-User Story: When I beat an enemy, the enemy goes away and I get XP, which eventually increases my level.
+x User Story: When I beat an enemy, the enemy goes away and I get XP, which eventually increases my level.
 
-User Story: When I fight an enemy, we take turns damaging each other until one of us loses. I do damage based off of my level and my weapon. The enemy does damage based off of its level. Damage is somewhat random within a range.
+x User Story: When I fight an enemy, we take turns damaging each other until one of us loses. I do damage based off of my level and my weapon. The enemy does damage based off of its level. Damage is somewhat random within a range.
 
 User Story: When I find and beat the boss, I win.
 
-User Story: The game should be challenging, but theoretically winnable.
+x User Story: The game should be challenging, but theoretically winnable.
 */
 
 var __extends = (this && this.__extends) || function (d, b) {
@@ -10321,7 +10380,7 @@ var ReactDOM = __webpack_require__(91);
 __webpack_require__(189);
 //import {DungeonMapGenerator,MapTiles,Random,Tile,HealthPotion,Weapon,Monster} from './dungeon';
 var dungeon_1 = __webpack_require__(58);
-var entities_1 = __webpack_require__(34);
+var Entities = __webpack_require__(34);
 var react_1 = __webpack_require__(87);
 var UserInfo = (function (_super) {
     __extends(UserInfo, _super);
@@ -10337,8 +10396,9 @@ var UserInfo = (function (_super) {
                     React.createElement("label", null, "Level:")),
                 React.createElement("div", { className: "col col-xs-2" }, "Health:"),
                 React.createElement("div", { className: "col col-xs-3" }, "Weapon:"),
-                React.createElement("div", { className: "col col-xs-3" }, "Damage Dealt:"),
-                React.createElement("div", { className: "col col-xs-2" }, "Damage Taken:")),
+                React.createElement("div", { className: "col col-xs-2" }, "Damage Dealt:"),
+                React.createElement("div", { className: "col col-xs-2" }, "Damage Taken:"),
+                React.createElement("div", { className: "col col-xs-2" }, "Monster Health:")),
             React.createElement("div", { className: "row" },
                 React.createElement("div", { className: "col col-xs-2" }, this.props.dungeonLevel),
                 React.createElement("div", { className: "col col-xs-2" }, this.props.player.level),
@@ -10348,8 +10408,9 @@ var UserInfo = (function (_super) {
                     "\u00A0" + " " + "(",
                     this.props.player.weapon.damageRoll,
                     ")"),
-                React.createElement("div", { className: "col col-xs-3" }, this.props.player.weapon.damage),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.player.damageTaken))));
+                React.createElement("div", { className: "col col-xs-2" }, this.props.player.weapon.damage),
+                React.createElement("div", { className: "col col-xs-2" }, this.props.player.damageTaken),
+                React.createElement("div", { className: "col col-xs-2" }, this.props.monster === undefined ? "" : this.props.monster.hp))));
     };
     return UserInfo;
 }(react_1.Component));
@@ -10363,11 +10424,8 @@ var DungeonGame = (function (_super) {
         _this.state = { tileMap: _this.dungeonMap.tileMap, player: _this.dungeonMap.player };
         return _this;
     }
-    // animate()
-    // {
-    //     requestAnimationFrame(this.animate);
-    // }
     DungeonGame.prototype.move = function (e) {
+        var _this = this;
         var x = this.dungeonMap.player.location.x;
         var y = this.dungeonMap.player.location.y;
         var newX = x;
@@ -10388,18 +10446,38 @@ var DungeonGame = (function (_super) {
                 break;
         }
         var tile = this.dungeonMap.tileMap[newY][newX];
-        if (tile instanceof entities_1.Stairs) {
+        var doMove = tile.interact(this.dungeonMap.player);
+        if (tile instanceof Entities.Stairs) {
             this.dungeonMap.level++;
             this.dungeonMap.generate();
         }
         else {
-            var doMove = tile.interact(this.dungeonMap.player);
-            if (doMove) {
-                this.dungeonMap.tileMap[y][x] = new entities_1.Floor();
-                this.dungeonMap.player.location.x = newX;
-                this.dungeonMap.player.location.y = newY;
-                this.dungeonMap.tileMap[newY][newX] = this.dungeonMap.player;
+            if (this.dungeonMap.player.hp <= 0) {
+                this.dungeonMap.gameResults = dungeon_1.GameResults.lost;
+                doMove = false;
             }
+            else if (doMove) {
+                if (tile instanceof Entities.Monster && tile.isBoss) {
+                    this.dungeonMap.gameResults = dungeon_1.GameResults.won;
+                    doMove = false;
+                }
+            }
+            else {
+                if (tile instanceof Entities.Monster)
+                    this.dungeonMap.currentOpponent = tile;
+            }
+        }
+        if (doMove) {
+            this.dungeonMap.tileMap[y][x] = new Entities.Floor();
+            this.dungeonMap.tileMap[newY][newX] = this.dungeonMap.player;
+            this.dungeonMap.player.location.x = newX;
+            this.dungeonMap.player.location.y = newY;
+            //hide all that is visible
+            this.dungeonMap.visibleTiles.forEach(function (t) {
+                var point = t.split(",");
+                _this.dungeonMap.tileMap[point[1]][point[0]].show = false;
+            });
+            this.dungeonMap.setVisibleArea();
         }
         this.setState({ tileMap: this.dungeonMap.tileMap, player: this.dungeonMap.player });
     };
@@ -10411,7 +10489,7 @@ var DungeonGame = (function (_super) {
     };
     DungeonGame.prototype.render = function () {
         return (React.createElement("div", null,
-            React.createElement(UserInfo, { player: this.state.player, dungeonLevel: this.dungeonMap.level }),
+            React.createElement(UserInfo, { player: this.state.player, dungeonLevel: this.dungeonMap.level, monster: this.dungeonMap.currentOpponent }),
             React.createElement(Dungeon, { tileMap: this.state.tileMap })));
     };
     return DungeonGame;
@@ -10431,8 +10509,6 @@ var Dungeon = (function (_super) {
     };
     return Dungeon;
 }(react_1.Component));
-//let title = this.props.tile.name + (this.props.tile.hp === undefined ? "" : "\nHP: " + this.props.tile.hp)
-//    + (this.props.tile.damageRoll === undefined ? "" : "\nDamage: " + this.props.tile.damageRoll);
 var MapCell = (function (_super) {
     __extends(MapCell, _super);
     function MapCell() {
@@ -10440,11 +10516,10 @@ var MapCell = (function (_super) {
     }
     //is it a person, weapon, health item or enemy
     MapCell.prototype.render = function () {
-        //debugger;
         if (this.props.tile.tooltip === null) {
             return React.createElement("div", { className: "board-cell " + this.props.tile.className });
         }
-        return React.createElement("div", { className: "board-cell " + this.props.tile.className, title: this.props.tile.tooltip });
+        return React.createElement("div", { className: "board-cell " + (this.props.tile.show ? this.props.tile.className : "hidden"), title: this.props.tile.tooltip });
     };
     MapCell.prototype.shouldComponentUpdate = function (nextProps, nextState) {
         return this.props.tile != nextProps.tile;
@@ -10480,7 +10555,7 @@ exports = module.exports = __webpack_require__(90)();
 
 
 // module
-exports.push([module.i, ".board-row {\n  display: table-row;\n  height: 15px; }\n\n.board-cell {\n  display: table-cell;\n  height: inherit;\n  width: 15px;\n  border: 1px solid; }\n  .board-cell.floor {\n    background-color: tan; }\n  .board-cell.wall {\n    background-color: black; }\n  .board-cell.corridor {\n    background-color: yellow; }\n  .board-cell.monster {\n    background-color: red; }\n  .board-cell.weapon {\n    background-color: orange; }\n  .board-cell.health {\n    background-color: limegreen; }\n  .board-cell.player {\n    background-color: blue; }\n  .board-cell.stairs {\n    background-color: rebeccapurple; }\n", ""]);
+exports.push([module.i, ".board-row {\n  display: table-row;\n  height: 12px; }\n\n.board-cell {\n  display: table-cell;\n  height: inherit;\n  width: 12px; }\n  .board-cell.floor {\n    background-color: tan; }\n  .board-cell.hidden {\n    background-color: black; }\n  .board-cell.boss {\n    background-color: black; }\n  .board-cell.monster {\n    background-color: red; }\n  .board-cell.weapon {\n    background-color: orange; }\n  .board-cell.health {\n    background-color: limegreen; }\n  .board-cell.player {\n    background-color: blue; }\n  .board-cell.stairs {\n    background-color: rebeccapurple; }\n", ""]);
 
 // exports
 

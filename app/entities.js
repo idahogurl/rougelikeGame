@@ -23,9 +23,7 @@ var WeaponFactory = (function () {
 exports.WeaponFactory = WeaponFactory;
 var MonsterFactory = (function () {
     function MonsterFactory() {
-    }
-    MonsterFactory.random = function (level) {
-        var monsters = {
+        this.monsters = {
             1: [
                 new Monster("Bat", 1, 1, "1d8", "1d2"),
                 new Monster("Emu", 2, 1, "1d8", "1d2"),
@@ -61,18 +59,32 @@ var MonsterFactory = (function () {
             15: new Monster("Jabberwock", 3000, 15, "15d8", "2d12/2d4"),
             20: new Monster("Griffin", 2000, 20, "13d8", "4d3/3d5/4d3")
         };
+    }
+    //get a monster at the specified index and specified level
+    MonsterFactory.prototype.get = function (level, index) {
+        var monster;
+        if (Array.isArray(this.monsters[level])) {
+            monster = this.monsters[level][index];
+        }
+        else {
+            monster = this.monsters[level];
+        }
+        monster.calcHp();
+        return monster;
+    };
+    MonsterFactory.prototype.random = function (level) {
         var selectedMonsters = [];
-        //TODO: get the monsters 2 less than or equal to the dungeon level
-        for (var monster_1 in monsters) {
+        //get the monsters in levels 5 less than or equal to the current dungeon level
+        for (var monster_1 in this.monsters) {
             var key = parseInt(monster_1);
-            if (key <= level) {
-                if (Array.isArray(monsters[key])) {
-                    monsters[key].forEach(function (m) {
+            if (key >= level - 5) {
+                if (Array.isArray(this.monsters[level])) {
+                    this.monsters[level].forEach(function (m) {
                         selectedMonsters.push(m);
                     });
                 }
                 else {
-                    selectedMonsters.push(monsters[key]);
+                    selectedMonsters.push(this.monsters[level]);
                 }
             }
         }
@@ -116,9 +128,9 @@ var Monster = (function (_super) {
     };
     Monster.prototype.interact = function (player) {
         player.attack(this);
-        if (this.hp <= 0) {
+        if (this.hp <= 0)
             return true;
-        }
+        return false;
     };
     return Monster;
 }(Creature));
@@ -127,9 +139,9 @@ var Player = (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, "You", 0, 1) || this;
-        _this.weapon = new Weapon("1d3", "Stick", 1);
+        _this.weapon = new Weapon("5d20", "Stick", 5);
         _this.className = "player";
-        _this.hp = 12;
+        _this.hp = 500;
         _this.experinceLevels = [
             0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
             1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
@@ -163,7 +175,8 @@ var Player = (function (_super) {
         opponent.hp -= this.weapon.damage;
         this.damageTaken = opponent.damage;
         this.hp -= opponent.damage;
-        this.gainXp(opponent.xp);
+        if (opponent.hp <= 0)
+            this.gainXp(opponent.xp);
     };
     Player.prototype.gainXp = function (xp) {
         var _this = this;
@@ -264,7 +277,6 @@ var Dice = (function () {
         var rolls = value.split("/");
         rolls.forEach(function (r) {
             var temp = value.split("d");
-            //debugger;
             var timesRoll = parseInt(temp[0]);
             var dieSides = parseInt(temp[1]);
             for (var i = 0; i < timesRoll; i++) {

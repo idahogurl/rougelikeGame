@@ -39,8 +39,9 @@ class UserInfo extends Component<any,any> {
                 <div className="col col-xs-2"><label>Level:</label></div>
                 <div className="col col-xs-2">Health:</div>
                 <div className="col col-xs-3">Weapon:</div>
-                <div className="col col-xs-3">Damage Dealt:</div>
+                <div className="col col-xs-2">Damage Dealt:</div>
                 <div className="col col-xs-2">Damage Taken:</div>
+                <div className="col col-xs-2">Monster Health:</div>
             </div>
             <div className="row">
                 <div className="col col-xs-2">{this.props.dungeonLevel}</div>
@@ -48,8 +49,9 @@ class UserInfo extends Component<any,any> {
                 <div className="col col-xs-2">{this.props.player.hp}</div>
                 <div className="col col-xs-3">{this.props.player.weapon.name}&nbsp;
                     ({this.props.player.weapon.damageRoll})</div>
-                <div className="col col-xs-3">{this.props.player.weapon.damage}</div>
+                <div className="col col-xs-2">{this.props.player.weapon.damage}</div>
                 <div className="col col-xs-2">{this.props.player.damageTaken}</div>
+                <div className="col col-xs-2">{this.props.monster === undefined ? "" : this.props.monster.hp}</div>
             </div>
         </div>
         );
@@ -91,34 +93,54 @@ class DungeonGame extends Component<any,any>
                 newX++;
                 break;
         }
-        
-        this.processMove(this.dungeonMap.tileMap[newY][newX]);
 
-        this.setState({ tileMap: this.dungeonMap.tileMap, player: this.dungeonMap.player });        		
-    }
-    processMove(tile:Entities.Entity)
-    {
+        let tile = this.dungeonMap.tileMap[newY][newX];
+        let doMove = tile.interact(this.dungeonMap.player);
+        
         if (tile instanceof Entities.Stairs)
         {
             this.dungeonMap.level++;
-            this.dungeonMap.generate();
+            this.dungeonMap.generate();            
         }
         else
-        {
-            let doMove = tile.interact(this.dungeonMap.player);
+        {  
             if (this.dungeonMap.player.hp <= 0) 
             {
                 this.dungeonMap.gameResults = GameResults.lost;
+                doMove = false;
             }
             else if (doMove) {
-                if (tile instanceof Entities.Monster)
+                if (tile instanceof Entities.Monster && (tile as Entities.Monster).isBoss)
                 {
-                    let monster = tile as Entities.Monster;
-                    if (monster.isBoss)
-                        this.dungeonMap.gameResults = GameResults.won;
+                    this.dungeonMap.gameResults = GameResults.won;
+                    doMove = false;                
                 }
+            } 
+            else
+            {
+                if (tile instanceof Entities.Monster) 
+                    this.dungeonMap.currentOpponent = tile as Entities.Monster;
             }
         }
+
+        if (doMove)
+        {
+            this.dungeonMap.tileMap[y][x] = new Entities.Floor();            
+            
+            this.dungeonMap.tileMap[newY][newX] = this.dungeonMap.player;
+            this.dungeonMap.player.location.x = newX;
+            this.dungeonMap.player.location.y = newY;
+
+            //hide all that is visible
+            this.dungeonMap.visibleTiles.forEach(t => {
+                let point = t.split(",");
+                this.dungeonMap.tileMap[point[1]][point[0]].show = false;
+            });
+
+            this.dungeonMap.setVisibleArea();            
+        }
+
+        this.setState({ tileMap: this.dungeonMap.tileMap, player: this.dungeonMap.player });        		
     }
     componentWillMount() 
     {
@@ -132,7 +154,7 @@ class DungeonGame extends Component<any,any>
     {
         return (
             <div>
-            <UserInfo player={this.state.player} dungeonLevel={this.dungeonMap.level}/>
+            <UserInfo player={this.state.player} dungeonLevel={this.dungeonMap.level} monster={this.dungeonMap.currentOpponent}/>
             <Dungeon tileMap={this.state.tileMap}/>
             </div>
         );
@@ -154,17 +176,14 @@ class Dungeon extends Component<any,any> {
     }
 }
 
-//let title = this.props.tile.name + (this.props.tile.hp === undefined ? "" : "\nHP: " + this.props.tile.hp)
-//    + (this.props.tile.damageRoll === undefined ? "" : "\nDamage: " + this.props.tile.damageRoll);
 class MapCell extends Component<any,any> {
     //is it a person, weapon, health item or enemy
     render() {        
-        //debugger;
         if (this.props.tile.tooltip === null) {
             return <div className={"board-cell " + this.props.tile.className}></div>
         }
         
-        return <div className={"board-cell " + this.props.tile.className} 
+        return <div className={"board-cell " + (this.props.tile.show ? this.props.tile.className : "hidden")} 
             title={this.props.tile.tooltip}></div>
     }
     shouldComponentUpdate(nextProps, nextState) {        

@@ -1,15 +1,18 @@
 .board-row {
     display: table-row;
-    height: 15px;
+    height: 12px;
 }
 
 .board-cell {
         display: table-cell;
         height: inherit;
-        width: 15px;
-        border: 1px solid;
+        width: 12px;
+        //border: 1px solid;
         &.floor {
-            background-color: tan; 
+            background-color: tan;
+        }
+        &.hidden {
+            background-color: black;
         }
         &.boss {
             background-color: black;

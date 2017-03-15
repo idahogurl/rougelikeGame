@@ -15,13 +15,10 @@ export class WeaponFactory
 }
 export class MonsterFactory 
 {
-	level:number;
 	monsters:any;
 
-	constructor(level:number) 
+	constructor() 
 	{
-		this.level = level;
-
 		this.monsters = { 
 			1: [ 
 					new Monster("Bat", 1, 1, "1d8", "1d2"), 
@@ -59,56 +56,51 @@ export class MonsterFactory
 			20: new Monster("Griffin", 2000, 20,"13d8", "4d3/3d5/4d3")
 		};
 	}
-	get(index:number = -1) : Monster 
+
+	//get a monster at the specified index and specified level
+	get(level:number, index:number) : Monster 
 	{
-		let monster:Monster;
-		if (index === -1) {
-			this.getRandom();
-		}
-		else
+		let monster: Monster;
+		if (Array.isArray(this.monsters[level]))
 		{
-			if (Array.isArray(this.monsters[this.level]))
-			{
-				monster = this.monsters[this.level][index];
-			}
-			else 
-			{
-				monster = this.monsters[this.level];
-			}
+			monster = this.monsters[level][index];
+		}
+		else 
+		{
+			monster = this.monsters[level];
 		}
 		
 		monster.calcHp();
 
 		return monster;
 	}
-	getRandom(): Monster
+	random(level:number): Monster
 	{
 		let selectedMonsters:Monster[] = [];
-		//get the monsters 2 less than or equal to the dungeon level
+		//get the monsters in levels 5 less than or equal to the current dungeon level
 		for (let monster in this.monsters) 
 		{
 			let key = parseInt(monster);
-			if (key >= this.level - 2) {
-				this.addToSelected(selectedMonsters);
+			if (key >= level - 5) {
+				if (Array.isArray(this.monsters[level])) 
+				{
+					this.monsters[level].forEach(m => 
+					{
+						selectedMonsters.push(m);
+					});
+				} 
+				else 
+				{
+					selectedMonsters.push(this.monsters[level]);
+				}
 			}
 		}
 		
 		//return a random monster from the list
-		return selectedMonsters[Random.next(0, selectedMonsters.length - 1)];
-	}
-	addToSelected(selectedMonsters:Monster[])
-	{
-		if (Array.isArray(this.monsters[this.level])) 
-		{
-			this.monsters[this.level].forEach(m => 
-			{
-				selectedMonsters.push(m);
-			});
-		} 
-		else 
-		{
-			selectedMonsters.push(this.monsters[this.level]);
-		}
+		let monster = selectedMonsters[Random.next(0, selectedMonsters.length - 1)];
+		monster.calcHp();
+
+		return monster;
 	}
 }
 
@@ -118,6 +110,7 @@ export abstract class Entity
 	location: Point;
 	className:string;	
 	tooltip: string;
+	show: boolean;
 	
 	constructor(name:string) {
 		this.name = name;
@@ -151,7 +144,7 @@ export class Monster extends Creature {
 		this.damageRoll = damageRoll;
 		this.className = "monster";		
 	}
-	calcHp() {
+	calcHp() {		
 		this.hp = Dice.roll(this.hpRoll);
 		this.tooltip =  this.name + "\nHP: " + this.hp + "\nDamage: " + this.damageRoll;
 	}
@@ -159,9 +152,9 @@ export class Monster extends Creature {
 	{
 		player.attack(this);
 		
-		if (this.hp <= 0) return false;
+		if (this.hp <= 0) return true;
 		
-		return true;
+		return false;
 	}
 }
 export class Player extends Creature {
@@ -176,11 +169,10 @@ You start at level 1 and can reach a maximum level of 30.
 
 	constructor() {
 		super("You", 0, 1);		
-		
-		this.weapon = new Weapon("1d3", "Stick", 1);
+		this.weapon = new Weapon("5d20", "Stick", 5);
         
 		this.className = "player";
-		this.hp = 12;		
+		this.hp = 500;		
 		this.experinceLevels = [
 			0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
 			1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
@@ -215,7 +207,7 @@ You start at level 1 and can reach a maximum level of 30.
 		this.damageTaken = opponent.damage;
         this.hp -= opponent.damage;
 
-		this.gainXp(opponent.xp);
+		if (opponent.hp <= 0) this.gainXp(opponent.xp);
     }
 	gainXp(xp:number) {
 		this.xp += xp;
@@ -320,8 +312,7 @@ class Dice {
 		//some monsters have damage that uses multiple dice in addition to multiple rolls
 		let rolls = value.split("/");
         rolls.forEach(r => {
-			let temp = value.split("d");
-        	//debugger;
+			let temp = value.split("d");        	
         	let timesRoll = parseInt(temp[0]);
         	let dieSides = parseInt(temp[1]);
 
