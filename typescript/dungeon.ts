@@ -32,7 +32,7 @@ class Room
 	{
 		if (Math.random() < 0.5) 
         {
-			this.monster = Dungeon.MonsterFactory.random(level);
+			this.monster = new Dungeon.MonsterFactory(level).get();
             
             let point = this.unusedPoint();
             this.usedPoints.push(point.toString());
@@ -129,14 +129,19 @@ class Tree {
     }
 }
 
-export class Map {
+export enum GameResults
+{
+    won, lost
+}
+
+export class Map 
+{
     private N_ITERATIONS = 4;
-        
-    mapElement: HTMLElement;
    
     rooms:Room[];
     roomTree:Tree;
     level: number = 1;
+    gameResults: GameResults;
 
     weapon:Dungeon.Weapon;
     stairs:Dungeon.Entity;
@@ -245,36 +250,43 @@ export class Map {
         for (let i = 0; i < this.rooms.length; i++) 
         {
             let room = this.rooms[i];
-            if (room.addMonster(this.level)) this.tileMap[room.monster.location.y][room.monster.location.x] = room.monster;
+            if (room.addMonster(this.level)) this.addToMap(room.monster, false);
                 
-            if (room.addHealthPotion()) this.tileMap[room.healthPotion.location.y][room.healthPotion.location.x] = room.healthPotion;
+            if (room.addHealthPotion()) this.addToMap(room.healthPotion, false);
         }   
 
-        //add one weapon
-        //TODO: stop adding weapons after the player collects the best weapon
-        this.weapon = Dungeon.WeaponFactory.get(this.level);
-        this.weapon.location = this.getRandomPoint();
-        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
-
-        //add one set of stairs
-        this.stairs = new Dungeon.Stairs();
-        this.stairs.location = this.getRandomPoint();
-        this.tileMap[this.stairs.location.y][this.stairs.location.x] = this.stairs;
-
-        if (this.level === 1)
+        //add boss monster for final level
+        if (this.level == 20)
         {
-            this.player = new Dungeon.Player();            
+            let bossMonster = new Dungeon.MonsterFactory(20).get();
+            bossMonster.isBoss = true;
+            bossMonster.className = "boss";
+            this.addToMap(bossMonster, true);
         }
 
-        let startPoint = this.getRandomPoint();
-        this.player.location = startPoint;
-        this.tileMap[startPoint.y][startPoint.x] = this.player;
+        //add one weapon unless the player already has the best weapon
+        if (this.player.weapon.level !== 5) this.addToMap(Dungeon.WeaponFactory.get(this.level), true);
 
+        //add one set of stairs
+        this.addToMap(new Dungeon.Stairs(), true);
+
+        if (this.level === 1) this.player = new Dungeon.Player();
+        
+        this.addToMap(this.player, true);
+
+    }
+    addToMap(entity:Dungeon.Entity, setRandomLocation:boolean)
+    {
+        if (setRandomLocation) entity.location = this.getRandomPoint();
+        this.tileMap[this.weapon.location.y][this.weapon.location.x] = this.weapon;
     }
     getRandomPoint():Point
     {
-        let room = this.rooms[Random.next(0, this.rooms.length - 1)];
-        return room.unusedPoint();
+        return this.getRandomRoom().unusedPoint();
+    }
+    getRandomRoom()
+    {
+        return this.rooms[Random.next(0, this.rooms.length - 1)];
     }
     addPaths(tree) 
     {

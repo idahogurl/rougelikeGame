@@ -15,9 +15,14 @@ export class WeaponFactory
 }
 export class MonsterFactory 
 {
-	static random(level:number) : Monster 
+	level:number;
+	monsters:any;
+
+	constructor(level:number) 
 	{
-		let monsters = { 
+		this.level = level;
+
+		this.monsters = { 
 			1: [ 
 					new Monster("Bat", 1, 1, "1d8", "1d2"), 
 					new Monster("Emu", 2, 1, "1d8", "1d2"),
@@ -53,32 +58,57 @@ export class MonsterFactory
 			15: new Monster("Jabberwock",3000, 15,  "15d8", "2d12/2d4"),
 			20: new Monster("Griffin", 2000, 20,"13d8", "4d3/3d5/4d3")
 		};
+	}
+	get(index:number = -1) : Monster 
+	{
+		let monster:Monster;
+		if (index === -1) {
+			this.getRandom();
+		}
+		else
+		{
+			if (Array.isArray(this.monsters[this.level]))
+			{
+				monster = this.monsters[this.level][index];
+			}
+			else 
+			{
+				monster = this.monsters[this.level];
+			}
+		}
 		
+		monster.calcHp();
+
+		return monster;
+	}
+	getRandom(): Monster
+	{
 		let selectedMonsters:Monster[] = [];
-		//TODO: get the monsters 2 less than or equal to the dungeon level
-		for (let monster in monsters) 
+		//get the monsters 2 less than or equal to the dungeon level
+		for (let monster in this.monsters) 
 		{
 			let key = parseInt(monster);
-			if (key <= level) {
-				if (Array.isArray(monsters[key])) 
-				{
-					monsters[key].forEach(m => 
-					{
-						selectedMonsters.push(m);
-					});
-				} 
-				else 
-				{
-					selectedMonsters.push(monsters[key]);
-				}
+			if (key >= this.level - 2) {
+				this.addToSelected(selectedMonsters);
 			}
 		}
 		
 		//return a random monster from the list
-		let monster = selectedMonsters[Random.next(0, selectedMonsters.length - 1)];
-		monster.calcHp();
-
-		return monster;
+		return selectedMonsters[Random.next(0, selectedMonsters.length - 1)];
+	}
+	addToSelected(selectedMonsters:Monster[])
+	{
+		if (Array.isArray(this.monsters[this.level])) 
+		{
+			this.monsters[this.level].forEach(m => 
+			{
+				selectedMonsters.push(m);
+			});
+		} 
+		else 
+		{
+			selectedMonsters.push(this.monsters[this.level]);
+		}
 	}
 }
 
@@ -111,7 +141,8 @@ abstract class Creature extends Entity
 export class Monster extends Creature {	
 	hpRoll: string;
 	damageRoll: string;
-	damage: number;	
+	damage: number;
+	isBoss:boolean
 	
 	constructor(name:string, xp:number, level:number, hpRoll:string, damageRoll:string) {
 		super(name, xp, level);
@@ -128,10 +159,9 @@ export class Monster extends Creature {
 	{
 		player.attack(this);
 		
-		if (this.hp <= 0)
-		{
-			return true;
-		}
+		if (this.hp <= 0) return false;
+		
+		return true;
 	}
 }
 export class Player extends Creature {

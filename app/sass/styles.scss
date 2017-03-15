@@ -11,11 +11,8 @@
         &.floor {
             background-color: tan; 
         }
-        &.wall {
+        &.boss {
             background-color: black;
-        }
-        &.corridor {
-            background-color: yellow;
         }
         &.monster {
             background-color: red;
@@ -32,8 +29,4 @@
         &.stairs {
             background-color: rebeccapurple;
         }
-        // &.boss {}
-        // &.stairCaseUp{}
-        // &.stairCaseDown{}
-
     }
