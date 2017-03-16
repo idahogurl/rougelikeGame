@@ -1,12 +1,13 @@
 //https://eskerda.com/bsp-dungeon-generation/
-let MAP_SIZE = 30;
+let MAP_SIZE = 50;
 let W_RATIO = 0.45;
 let H_RATIO = 0.45;
 let DISCARD_BY_RATIO = true;
-let TOTAL_MAP_SIZE = 70; //to avoid boundary checks
+let TOTAL_MAP_SIZE = 50; //to avoid boundary checks
 
 import * as Dungeon from './entities';
 import {Random,Point} from './common';
+import * as Update from 'immutability-helper';
 
 class Room
 {
@@ -286,6 +287,20 @@ export class Map
         if (setRandomLocation) entity.location = this.getRandomPoint();
         this.tileMap[entity.location.y][entity.location.x] = entity;
     }
+    hideVisibleArea(){
+        //hide all that is visible
+        this.visibleTiles.forEach(t => {
+            let point = t.split(",");
+            let x = point[0];
+            let y = point[1];
+            
+            this.tileMap[y][x] = Update(this.tileMap[y][x], {show: { $set: false }});
+        });
+    }
+    isInBounds(x:number, y:number)
+    {
+        return !(y < 0 || y > MAP_SIZE || x < 0 || x > MAP_SIZE);
+    }
     setVisibleArea() {
         this.visibleTiles = [];
         let playerX = this.player.location.x;
@@ -294,14 +309,17 @@ export class Map
         let newX = playerX - 5;
         let newY = playerY - 2;
         let h = 5;
-        let w = 11;
+        let w = 13;
 
         for (let y = newY; y < newY + h; y++)
         {
             for (let x = newX; x < newX + w; x++)
             {
-                this.tileMap[y][x].show = true;
-                 this.visibleTiles.push(x + "," + y);
+                if (this.isInBounds(x, y))
+                {
+                    this.tileMap[y][x] = Update(this.tileMap[y][x], {show: { $set: true }});
+                    this.visibleTiles.push(x + "," + y);
+                }
             }
         }
 
@@ -315,15 +333,20 @@ export class Map
 
             w -= 2;
             for (let x = x1; x < x1 + w; x++) {
-                this.tileMap[y1][x].show = true;
-                this.visibleTiles.push(x + "," + y1);
+                if (this.isInBounds(x, y1))
+                {
+                    this.tileMap[y1][x] = Update(this.tileMap[y1][x], {show: { $set: true }});
+                    this.visibleTiles.push(x + "," + y1);
+                }
             }
             for (let x = x1; x < x1 + w; x++) {
-                this.tileMap[y2][x].show = true;
-                this.visibleTiles.push(x + "," + y2);
+                if (this.isInBounds(x, y2))
+                {
+                    this.tileMap[y2][x] = Update(this.tileMap[y2][x], {show: { $set: true }});
+                    this.visibleTiles.push(x + "," + y2);
+                }
             }
         }
-
     }
     getRandomPoint():Point
     {

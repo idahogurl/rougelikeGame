@@ -114,6 +114,7 @@ export abstract class Entity
 	
 	constructor(name:string) {
 		this.name = name;
+		this.show = false;
 	}
 	abstract interact(player:Player):boolean;
 }

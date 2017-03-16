@@ -5,13 +5,14 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 //https://eskerda.com/bsp-dungeon-generation/
-var MAP_SIZE = 30;
+var MAP_SIZE = 50;
 var W_RATIO = 0.45;
 var H_RATIO = 0.45;
 var DISCARD_BY_RATIO = true;
-var TOTAL_MAP_SIZE = 70; //to avoid boundary checks
+var TOTAL_MAP_SIZE = 50; //to avoid boundary checks
 var Dungeon = require("./entities");
 var common_1 = require("./common");
+var Update = require("immutability-helper");
 var Room = (function () {
     function Room(x, y, w, h) {
         this.x = x;
@@ -219,6 +220,19 @@ var Map = (function () {
             entity.location = this.getRandomPoint();
         this.tileMap[entity.location.y][entity.location.x] = entity;
     };
+    Map.prototype.hideVisibleArea = function () {
+        var _this = this;
+        //hide all that is visible
+        this.visibleTiles.forEach(function (t) {
+            var point = t.split(",");
+            var x = point[0];
+            var y = point[1];
+            _this.tileMap[y][x] = Update(_this.tileMap[y][x], { show: { $set: false } });
+        });
+    };
+    Map.prototype.isInBounds = function (x, y) {
+        return !(y < 0 || y > MAP_SIZE || x < 0 || x > MAP_SIZE);
+    };
     Map.prototype.setVisibleArea = function () {
         this.visibleTiles = [];
         var playerX = this.player.location.x;
@@ -226,11 +240,13 @@ var Map = (function () {
         var newX = playerX - 5;
         var newY = playerY - 2;
         var h = 5;
-        var w = 11;
+        var w = 13;
         for (var y = newY; y < newY + h; y++) {
             for (var x = newX; x < newX + w; x++) {
-                this.tileMap[y][x].show = true;
-                this.visibleTiles.push(x + "," + y);
+                if (this.isInBounds(x, y)) {
+                    this.tileMap[y][x] = Update(this.tileMap[y][x], { show: { $set: true } });
+                    this.visibleTiles.push(x + "," + y);
+                }
             }
         }
         var y1 = newY;
@@ -242,12 +258,16 @@ var Map = (function () {
             y2++; //over one, down one, width less 2
             w -= 2;
             for (var x = x1; x < x1 + w; x++) {
-                this.tileMap[y1][x].show = true;
-                this.visibleTiles.push(x + "," + y1);
+                if (this.isInBounds(x, y1)) {
+                    this.tileMap[y1][x] = Update(this.tileMap[y1][x], { show: { $set: true } });
+                    this.visibleTiles.push(x + "," + y1);
+                }
             }
             for (var x = x1; x < x1 + w; x++) {
-                this.tileMap[y2][x].show = true;
-                this.visibleTiles.push(x + "," + y2);
+                if (this.isInBounds(x, y2)) {
+                    this.tileMap[y2][x] = Update(this.tileMap[y2][x], { show: { $set: true } });
+                    this.visibleTiles.push(x + "," + y2);
+                }
             }
         }
     };

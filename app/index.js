@@ -32,37 +32,95 @@ require('./sass/styles.scss');
 var dungeon_1 = require("./dungeon");
 var Entities = require("./entities");
 var react_1 = require("react");
+var InfoPanel = (function (_super) {
+    __extends(InfoPanel, _super);
+    function InfoPanel() {
+        return _super.apply(this, arguments) || this;
+    }
+    InfoPanel.prototype.render = function () {
+        var rows = this.props.rows;
+        debugger;
+        var i = 0;
+        if (rows === undefined) {
+            rows = this.props.info.map(function (c) {
+                i++;
+                return (React.createElement("div", { className: "table-row", key: i },
+                    React.createElement("div", { className: "table-cell" },
+                        React.createElement("label", null,
+                            c.label,
+                            ":")),
+                    React.createElement("div", { className: "table-cell" }, c.val)));
+            });
+        }
+        return (React.createElement("div", { className: "info-panel" },
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "scroll-top table-cell" }),
+                React.createElement("div", { className: "scroll-body table-cell" },
+                    React.createElement("div", { className: "info" },
+                        React.createElement("div", { className: "info-header" }, this.props.header),
+                        rows)),
+                React.createElement("div", { className: "scroll-end table-cell" }))));
+    };
+    return InfoPanel;
+}(react_1.Component));
+var OpponentInfo = (function (_super) {
+    __extends(OpponentInfo, _super);
+    function OpponentInfo() {
+        return _super.apply(this, arguments) || this;
+    }
+    OpponentInfo.prototype.render = function () {
+        debugger;
+        var info = [];
+        info.push({ label: "Damage Dealt", val: !this.props.player.weapon.damage ? "Not Started" : this.props.player.weapon.damage });
+        info.push({ label: "Damage Taken", val: !this.props.player.damageTaken ? "Not Started" : this.props.player.damageTaken });
+        info.push({ label: "Monster Health", val: !this.props.monster ? "Not Started" : this.props.monster.hp < 0 ? 0 : this.props.monster.hp });
+        return (React.createElement(InfoPanel, { header: "Battle", info: info }));
+    };
+    return OpponentInfo;
+}(react_1.Component));
 var UserInfo = (function (_super) {
     __extends(UserInfo, _super);
     function UserInfo() {
         return _super.apply(this, arguments) || this;
     }
     UserInfo.prototype.render = function () {
-        return (React.createElement("div", { className: "container" },
-            React.createElement("div", { className: "row" },
-                React.createElement("div", { className: "col col-xs-2" },
-                    React.createElement("label", null, "Dungeon:")),
-                React.createElement("div", { className: "col col-xs-2" },
-                    React.createElement("label", null, "Level:")),
-                React.createElement("div", { className: "col col-xs-2" }, "Health:"),
-                React.createElement("div", { className: "col col-xs-3" }, "Weapon:"),
-                React.createElement("div", { className: "col col-xs-2" }, "Damage Dealt:"),
-                React.createElement("div", { className: "col col-xs-2" }, "Damage Taken:"),
-                React.createElement("div", { className: "col col-xs-2" }, "Monster Health:")),
-            React.createElement("div", { className: "row" },
-                React.createElement("div", { className: "col col-xs-2" }, this.props.dungeonLevel),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.player.level),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.player.hp),
-                React.createElement("div", { className: "col col-xs-3" },
-                    this.props.player.weapon.name,
-                    "\u00A0" + " " + "(",
-                    this.props.player.weapon.damageRoll,
-                    ")"),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.player.weapon.damage),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.player.damageTaken),
-                React.createElement("div", { className: "col col-xs-2" }, this.props.monster === undefined ? "" : this.props.monster.hp))));
+        var info = [];
+        info.push({ label: "Dungeon", val: this.props.dungeonLevel });
+        info.push({ label: "XP Level", val: this.props.player.level });
+        info.push({ label: "Health", val: this.props.player.hp });
+        info.push({ label: "Weapon", val: this.props.player.weapon.name + " (" + this.props.player.weapon.damageRoll + ")" });
+        return (React.createElement(InfoPanel, { header: "Player", info: info }));
     };
     return UserInfo;
+}(react_1.Component));
+var Legend = (function (_super) {
+    __extends(Legend, _super);
+    function Legend() {
+        return _super.apply(this, arguments) || this;
+    }
+    Legend.prototype.render = function () {
+        var rows = (React.createElement("div", null,
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "legend-cell player" }),
+                " You"),
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "board-cell monster" }),
+                " Monster"),
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "board-cell weapon" }),
+                " Weapon"),
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "board-cell health" }),
+                " Health Potion"),
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "board-cell boss" }),
+                " Boss"),
+            React.createElement("div", { className: "board-row" },
+                React.createElement("span", { className: "board-cell stairs" }),
+                " Stairs")));
+        return (React.createElement(InfoPanel, { header: "Legend", rows: rows }));
+    };
+    return Legend;
 }(react_1.Component));
 var DungeonGame = (function (_super) {
     __extends(DungeonGame, _super);
@@ -71,27 +129,26 @@ var DungeonGame = (function (_super) {
         _this.dungeonMap = new dungeon_1.Map();
         _this.dungeonMap.generate();
         _this.move = _this.move.bind(_this);
-        _this.state = { tileMap: _this.dungeonMap.tileMap, player: _this.dungeonMap.player };
+        _this.state = { dungeon: _this.dungeonMap };
         return _this;
     }
     DungeonGame.prototype.move = function (e) {
-        var _this = this;
         var x = this.dungeonMap.player.location.x;
         var y = this.dungeonMap.player.location.y;
         var newX = x;
         var newY = y;
         debugger;
-        switch (e.key) {
-            case "ArrowUp":
+        switch (e.keyCode) {
+            case 38:
                 newY--;
                 break;
-            case "ArrowLeft":
+            case 37:
                 newX--;
                 break;
-            case "ArrowDown":
+            case 40:
                 newY++;
                 break;
-            case "ArrowRight":
+            case 39:
                 newX++;
                 break;
         }
@@ -122,14 +179,10 @@ var DungeonGame = (function (_super) {
             this.dungeonMap.tileMap[newY][newX] = this.dungeonMap.player;
             this.dungeonMap.player.location.x = newX;
             this.dungeonMap.player.location.y = newY;
-            //hide all that is visible
-            this.dungeonMap.visibleTiles.forEach(function (t) {
-                var point = t.split(",");
-                _this.dungeonMap.tileMap[point[1]][point[0]].show = false;
-            });
+            this.dungeonMap.hideVisibleArea();
             this.dungeonMap.setVisibleArea();
         }
-        this.setState({ tileMap: this.dungeonMap.tileMap, player: this.dungeonMap.player });
+        this.setState({ dungeon: this.dungeonMap });
     };
     DungeonGame.prototype.componentWillMount = function () {
         window.addEventListener("keydown", this.move);
@@ -138,9 +191,23 @@ var DungeonGame = (function (_super) {
         window.removeEventListener("keydown");
     };
     DungeonGame.prototype.render = function () {
+        var instructions = (React.createElement("ul", null,
+            React.createElement("li", null, "Use arrow keys to move."),
+            React.createElement("li", null, "Hover over squares to see their properties."),
+            React.createElement("li", null, "Defeat boss in level 20")));
+        debugger;
         return (React.createElement("div", null,
-            React.createElement(UserInfo, { player: this.state.player, dungeonLevel: this.dungeonMap.level, monster: this.dungeonMap.currentOpponent }),
-            React.createElement(Dungeon, { tileMap: this.state.tileMap })));
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell info-panels" },
+                    React.createElement(InfoPanel, { header: "Instructions", rows: instructions }),
+                    React.createElement(Legend, null)),
+                React.createElement("div", { className: "table-cell map-paper" },
+                    React.createElement("h1", null, "Rougelike React Game"),
+                    React.createElement("div", { className: "map" },
+                        React.createElement(Dungeon, { tileMap: this.state.dungeon.tileMap, player: this.state.dungeon.player }))),
+                React.createElement("div", { className: "table-cell info-panels" },
+                    React.createElement(UserInfo, { player: this.state.dungeon.player, dungeonLevel: this.state.dungeon.level }),
+                    React.createElement(OpponentInfo, { monster: this.state.dungeon.currentOpponent, player: this.state.dungeon.player })))));
     };
     return DungeonGame;
 }(react_1.Component));
@@ -193,4 +260,4 @@ var MapRow = (function (_super) {
     };
     return MapRow;
 }(react_1.Component));
-ReactDOM.render(React.createElement(DungeonGame, null), document.getElementById("playerInfo"));
+ReactDOM.render(React.createElement(DungeonGame, null), document.getElementById("dungeonGame"));

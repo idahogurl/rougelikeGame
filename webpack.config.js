@@ -29,6 +29,10 @@ var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
               include: __dirname + '/typescript', 
               exclude: /node_modules/, 
               loader: "typescript-loader"
+            },
+            {
+              test: /\.png|\.jpg$/,
+              loader: "file-loader"
             }
     ]
   },

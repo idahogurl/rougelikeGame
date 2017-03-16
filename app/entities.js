@@ -99,6 +99,7 @@ exports.MonsterFactory = MonsterFactory;
 var Entity = (function () {
     function Entity(name) {
         this.name = name;
+        this.show = false;
     }
     return Entity;
 }());

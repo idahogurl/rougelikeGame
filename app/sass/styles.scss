@@ -1,35 +1,119 @@
-.board-row {
+body
+{
+    background-image: url("../images/concrete_surface.jpg");
+    margin-top: 20px;
+    font-size: 12pt;
+}
+.game-container
+{
+    width: 1600px;
+    margin:auto;    
+}
+.map {
+    background-color: darkgray;   
+    width: 590px;
+    margin: 10px auto 10px auto;   
+}
+.map-paper 
+{
+    width: 633px;
+    height: 653px;
+    -webkit-box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
+    -moz-box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
+    box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
+    border-radius: 20px;
+}
+.legend-cell
+{
+    @extend .board-cell;
+    padding: 12px;
+}
+label 
+{
+    margin-left: 5px;
+    margin-right: 5px;
+    font-weight: bold;
+}
+h1{
+    font: 60pt "Jim Nightshade";
+    text-align: center;     
+    text-shadow: rgb(224, 224, 224) 1px 1px 0px;   
+}
+.table-row {
     display: table-row;
-    height: 12px;
+}
+.table-cell 
+{
+    display: table-cell;
+}
+.info-panels
+{
+    width: 500px;
+    padding-left: 50px;
+}
+.info-panel 
+{
+   height: 288px;
+   margin: 10px;
+}
+.info {
+    padding-top: 50px;
+}
+.info-header
+{
+    text-align: center;
+    font: 24pt "Jim Nightshade";
+}
+.scroll-top
+{
+    background-image: url('../images/scrollTop.png');
+    width:65px !important;;
+}
+.scroll-end
+{
+    background-image: url('../images/scrollEnd.png');
+    width:65px !important;
+}
+.scroll-body
+{
+    background-image: url('../images/scrollBody.png');
+    width: 221px !important;
+    height: 288px !important;
+    background-position: center;
+    background-repeat: no-repeat;      
 }
 
+.board-row {
+    @extend .table-row;
+    height: 12px;
+}
 .board-cell {
-        display: table-cell;
-        height: inherit;
-        width: 12px;
-        //border: 1px solid;
-        &.floor {
-            background-color: tan;
-        }
-        &.hidden {
-            background-color: black;
-        }
-        &.boss {
-            background-color: black;
-        }
-        &.monster {
-            background-color: red;
-        }
-        &.weapon {
-            background-color: orange;
-        }
-        &.health{
-            background-color: limegreen;
-        }
-        &.player {
-            background-color: blue;
-        }
-        &.stairs {
-            background-color: rebeccapurple;
-        }
+    @extend .table-cell;
+    height: inherit;
+    width: 12px;
+    //border: 1px solid;
+    &.floor {
+        background-color: floralwhite;
     }
+    &.hidden {
+        background-color: black;
+    }
+    &.boss {
+        background-color: deepskyblue;
+    }
+    &.monster {
+        background-color: red;
+    }
+    &.weapon {
+        background-color: orange;
+    }
+    &.health{
+        background-color: limegreen;
+    }
+    &.player {
+        background-color: blue;
+    }
+    &.stairs {
+        background-color: rebeccapurple;
+    }
+}
