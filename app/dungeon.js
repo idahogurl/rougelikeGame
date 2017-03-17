@@ -104,11 +104,12 @@ var Tree = (function () {
     };
     return Tree;
 }());
-var GameResults;
-(function (GameResults) {
-    GameResults[GameResults["won"] = 0] = "won";
-    GameResults[GameResults["lost"] = 1] = "lost";
-})(GameResults = exports.GameResults || (exports.GameResults = {}));
+var GameStatus;
+(function (GameStatus) {
+    GameStatus[GameStatus["won"] = 0] = "won";
+    GameStatus[GameStatus["lost"] = 1] = "lost";
+    GameStatus[GameStatus["in_progress"] = 2] = "in_progress";
+})(GameStatus = exports.GameStatus || (exports.GameStatus = {}));
 var Map = (function () {
     function Map() {
         this.N_ITERATIONS = 3;
@@ -117,6 +118,7 @@ var Map = (function () {
     Map.prototype.generate = function () {
         this.rooms = [];
         this.tileMap = new Array(TOTAL_MAP_SIZE);
+        this.gameStatus = GameStatus.in_progress;
         this.initTileMap();
         var main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);
@@ -240,7 +242,7 @@ var Map = (function () {
         var newX = playerX - 5;
         var newY = playerY - 2;
         var h = 5;
-        var w = 13;
+        var w = 11;
         for (var y = newY; y < newY + h; y++) {
             for (var x = newX; x < newX + w; x++) {
                 if (this.isInBounds(x, y)) {

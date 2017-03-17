@@ -26,7 +26,7 @@ const ReactDOM = require('react-dom');
 require('./sass/styles.scss');
 
 //import {DungeonMapGenerator,MapTiles,Random,Tile,HealthPotion,Weapon,Monster} from './dungeon';
-import {Map, GameResults} from './dungeon';
+import {Map, GameStatus} from './dungeon';
 import * as Entities from './entities';
 import {Component} from 'react';
 
@@ -63,10 +63,16 @@ class InfoPanel extends Component<any,any>
                 </div>
                 </div>);
     }
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.rows != nextProps.rows;
+    }
 }
 
 class OpponentInfo extends Component<any,any>
 {
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.player != nextProps.player;
+    }
     render()
     {
         debugger;
@@ -78,10 +84,13 @@ class OpponentInfo extends Component<any,any>
             <InfoPanel header="Battle" info={info}/>
                           
         );
-    }
+    }    
 }
 class UserInfo extends Component<any,any> 
 {
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.player != nextProps.player;
+    }
     render() {
         let info = [];
         info.push({label: "Dungeon", val: this.props.dungeonLevel });
@@ -101,18 +110,41 @@ class Legend extends Component<any,any>
     {
         let rows = (
             <div>
-                <div className="board-row"><span className="legend-cell player"></span> You</div>
-                <div className="board-row"><span className="board-cell monster"></span> Monster</div>
-                <div className="board-row"><span className="board-cell weapon"></span> Weapon</div>
-                <div className="board-row"><span className="board-cell health"></span> Health Potion</div>
-                <div className="board-row"><span className="board-cell boss"></span> Boss</div>
-                <div className="board-row"><span className="board-cell stairs"></span> Stairs</div>
+                <div className="table-row">
+                    <div className="table-cell">
+                        <div className="legend-cell player"></div>
+                        </div>
+                        <div className="table-cell">
+                            <label className="legend-label">You</label>
+                        </div>
+                </div>
+                <div className="table-row">
+                    <div className="table-cell"><div className="legend-cell monster"></div></div>
+                    <div className="table-cell"><label className="legend-label">Monster</label></div></div>
+                <div className="table-row">
+                    <div className="table-cell"><div className="legend-cell weapon"></div>
+                    </div><div className="table-cell"><label className="legend-label">Weapon</label></div>
+                </div>
+                <div className="table-row">
+                    <div className="table-cell"><div className="legend-cell health"></div></div>
+                    <div className="table-cell"><label className="legend-label">Health Potion</label></div></div>
+                <div className="table-row">
+                    <div className="table-cell">
+                        <div className="legend-cell boss"></div></div>
+                        <div className="table-cell"><label className="legend-label">Boss</label></div></div>
+                <div className="table-row">
+                    <div className="table-cell"><div className="legend-cell stairs"></div></div>
+                    <div className="table-cell"><label  className="legend-label">Stairs</label></div></div>
             </div>);
 
         return (
             <InfoPanel header="Legend" rows={rows}/>
                           
         );
+        
+    }
+    shouldComponentUpdate(nextProps, nextState) {
+        return false;
     }
 }
 class DungeonGame extends Component<any,any> 
@@ -123,11 +155,15 @@ class DungeonGame extends Component<any,any>
     {
         super();
 
-        this.dungeonMap = new Map();
-        this.dungeonMap.generate();
+        this.reset = this.reset.bind(this);
+        this.reset();
 
         this.move = this.move.bind(this);
         this.state = { dungeon: this.dungeonMap };
+    }
+    reset() {
+        this.dungeonMap = new Map();
+        this.dungeonMap.generate();
     }
     move(e)
     {
@@ -164,13 +200,14 @@ class DungeonGame extends Component<any,any>
         {  
             if (this.dungeonMap.player.hp <= 0) 
             {
-                this.dungeonMap.gameResults = GameResults.lost;
+                this.dungeonMap.gameStatus = GameStatus.lost;
                 doMove = false;
             }
             else if (doMove) {
+                this.dungeonMap.gameStatus = GameStatus.won;
                 if (tile instanceof Entities.Monster && (tile as Entities.Monster).isBoss)
                 {
-                    this.dungeonMap.gameResults = GameResults.won;
+                    this.dungeonMap.gameStatus = GameStatus.won;
                     doMove = false;                
                 }
             } 
@@ -205,10 +242,12 @@ class DungeonGame extends Component<any,any>
     {
         let instructions = (<ul>
             <li>Use arrow keys to move.</li>
+            <li>To obtain an item or attack a monster, move over the square.</li>
             <li>Hover over squares to see their properties.</li>
-            <li>Defeat boss in level 20</li>
+            <li>Defeat boss in level 20.</li>
             </ul>);
         debugger;
+        let playAgainButton = <button className="btn btn-default" onClick={this.reset}>Play again?</button>;
         return (
             <div>
                 <div className="table-row">
@@ -216,11 +255,15 @@ class DungeonGame extends Component<any,any>
                         <InfoPanel header="Instructions" rows={instructions}/>
                         <Legend />                        
                     </div>
-                    <div className="table-cell map-paper">
-                         <h1>Rougelike React Game</h1>
-                        <div className="map">
-                            <Dungeon tileMap={this.state.dungeon.tileMap} player={this.state.dungeon.player}/>        
-                        </div>
+                    <div className="table-cell map">
+                       
+                            {this.state.dungeon.gameStatus === GameStatus.in_progress ?
+                                <Dungeon tileMap={this.state.dungeon.tileMap} player={this.state.dungeon.player}/>
+                                : this.state.dungeon.gameStatus === GameStatus.won ? 
+                                    <div><div id="won" className="gameResult"/>{playAgainButton}</div>
+                                    :  this.state.dungeon.gameStatus == GameStatus.lost ?
+                                       <div><div id="lost" className="gameResult"></div>{playAgainButton}</div> : ""}
+                        
                     </div>
                     <div className="table-cell info-panels">
                             <UserInfo player={this.state.dungeon.player} dungeonLevel={this.state.dungeon.level} />

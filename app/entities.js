@@ -248,7 +248,9 @@ exports.Stairs = Stairs;
 var Empty = (function (_super) {
     __extends(Empty, _super);
     function Empty() {
-        return _super.call(this, null) || this;
+        var _this = _super.call(this, null) || this;
+        _this.className = "empty";
+        return _this;
     }
     Empty.prototype.interact = function () {
         return false;

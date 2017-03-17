@@ -7,34 +7,27 @@ body
 .game-container
 {
     width: 1600px;
-    margin:auto;    
-}
-.map {
-    background-color: darkgray;   
-    width: 590px;
-    margin: 10px auto 10px auto;   
-}
-.map-paper 
-{
-    width: 633px;
-    height: 653px;
-    -webkit-box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
-    -moz-box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
-    box-shadow: 0px -10px 50px 0px rgba(82,82,82,.5);
-    border-radius: 20px;
+    margin: auto;    
 }
 .legend-cell
 {
     @extend .board-cell;
-    padding: 12px;
+    padding: 8px; 
+    width: 8px;
+    border: 1px solid black; 
 }
 label 
 {
     margin-left: 5px;
     margin-right: 5px;
+    margin-bottom: 0;
     font-weight: bold;
 }
-h1{
+.legend-label {
+    font-weight: normal;
+    vertical-align: middle;    
+}
+h1 {
     font: 60pt "Jim Nightshade";
     text-align: center;     
     text-shadow: rgb(224, 224, 224) 1px 1px 0px;   
@@ -53,11 +46,12 @@ h1{
 }
 .info-panel 
 {
-   height: 288px;
+   height: 293px;
    margin: 10px;
 }
 .info {
-    padding-top: 50px;
+    padding-top: 20px;
+    margin: 10px;
 }
 .info-header
 {
@@ -67,25 +61,40 @@ h1{
 .scroll-top
 {
     background-image: url('../images/scrollTop.png');
-    width:65px !important;;
+    width:52px;
 }
 .scroll-end
 {
     background-image: url('../images/scrollEnd.png');
-    width:65px !important;
+    width:56px;
 }
 .scroll-body
 {
     background-image: url('../images/scrollBody.png');
-    width: 221px !important;
-    height: 288px !important;
+    width: 268px;
+    height: 293px;
     background-position: center;
     background-repeat: no-repeat;      
 }
 
+.gameResult {
+    height: 170px;
+    width: 600px;
+   
+    &#won {
+        background-image: url('../images/won.png');
+    }
+    &#lost {
+        background-image: url('../images/lost.png');       
+    }
+}
 .board-row {
     @extend .table-row;
     height: 12px;
+}
+.map {
+    text-align: center;
+    vertical-align: top;
 }
 .board-cell {
     @extend .table-cell;
@@ -116,4 +125,11 @@ h1{
     &.stairs {
         background-color: rebeccapurple;
     }
+    &.empty {
+        background-color: dimgray;
+    }
+}
+button
+{
+    cursor: pointer;
 }

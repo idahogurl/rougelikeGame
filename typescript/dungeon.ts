@@ -131,9 +131,9 @@ class Tree {
     }
 }
 
-export enum GameResults
+export enum GameStatus
 {
-    won, lost
+    won, lost, in_progress
 }
 
 export class Map
@@ -143,7 +143,7 @@ export class Map
     rooms:Room[];
     roomTree:Tree;
     level: number = 20;
-    gameResults: GameResults;
+    gameStatus: GameStatus;
 
     weapon:Dungeon.Weapon;
     stairs:Dungeon.Entity;
@@ -156,6 +156,7 @@ export class Map
     {
         this.rooms = [];
         this.tileMap = new Array(TOTAL_MAP_SIZE);
+        this.gameStatus = GameStatus.in_progress;
 
         this.initTileMap();
 
@@ -309,7 +310,7 @@ export class Map
         let newX = playerX - 5;
         let newY = playerY - 2;
         let h = 5;
-        let w = 13;
+        let w = 11;
 
         for (let y = newY; y < newY + h; y++)
         {

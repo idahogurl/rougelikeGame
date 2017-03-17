@@ -61,6 +61,9 @@ var InfoPanel = (function (_super) {
                         rows)),
                 React.createElement("div", { className: "scroll-end table-cell" }))));
     };
+    InfoPanel.prototype.shouldComponentUpdate = function (nextProps, nextState) {
+        return this.props.rows != nextProps.rows;
+    };
     return InfoPanel;
 }(react_1.Component));
 var OpponentInfo = (function (_super) {
@@ -68,6 +71,9 @@ var OpponentInfo = (function (_super) {
     function OpponentInfo() {
         return _super.apply(this, arguments) || this;
     }
+    OpponentInfo.prototype.shouldComponentUpdate = function (nextProps, nextState) {
+        return this.props.player != nextProps.player;
+    };
     OpponentInfo.prototype.render = function () {
         debugger;
         var info = [];
@@ -83,6 +89,9 @@ var UserInfo = (function (_super) {
     function UserInfo() {
         return _super.apply(this, arguments) || this;
     }
+    UserInfo.prototype.shouldComponentUpdate = function (nextProps, nextState) {
+        return this.props.player != nextProps.player;
+    };
     UserInfo.prototype.render = function () {
         var info = [];
         info.push({ label: "Dungeon", val: this.props.dungeonLevel });
@@ -100,25 +109,40 @@ var Legend = (function (_super) {
     }
     Legend.prototype.render = function () {
         var rows = (React.createElement("div", null,
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "legend-cell player" }),
-                " You"),
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "board-cell monster" }),
-                " Monster"),
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "board-cell weapon" }),
-                " Weapon"),
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "board-cell health" }),
-                " Health Potion"),
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "board-cell boss" }),
-                " Boss"),
-            React.createElement("div", { className: "board-row" },
-                React.createElement("span", { className: "board-cell stairs" }),
-                " Stairs")));
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell player" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "You"))),
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell monster" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "Monster"))),
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell weapon" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "Weapon"))),
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell health" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "Health Potion"))),
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell boss" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "Boss"))),
+            React.createElement("div", { className: "table-row" },
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("div", { className: "legend-cell stairs" })),
+                React.createElement("div", { className: "table-cell" },
+                    React.createElement("label", { className: "legend-label" }, "Stairs")))));
         return (React.createElement(InfoPanel, { header: "Legend", rows: rows }));
+    };
+    Legend.prototype.shouldComponentUpdate = function (nextProps, nextState) {
+        return false;
     };
     return Legend;
 }(react_1.Component));
@@ -126,12 +150,16 @@ var DungeonGame = (function (_super) {
     __extends(DungeonGame, _super);
     function DungeonGame() {
         var _this = _super.call(this) || this;
-        _this.dungeonMap = new dungeon_1.Map();
-        _this.dungeonMap.generate();
+        _this.reset = _this.reset.bind(_this);
+        _this.reset();
         _this.move = _this.move.bind(_this);
         _this.state = { dungeon: _this.dungeonMap };
         return _this;
     }
+    DungeonGame.prototype.reset = function () {
+        this.dungeonMap = new dungeon_1.Map();
+        this.dungeonMap.generate();
+    };
     DungeonGame.prototype.move = function (e) {
         var x = this.dungeonMap.player.location.x;
         var y = this.dungeonMap.player.location.y;
@@ -160,12 +188,13 @@ var DungeonGame = (function (_super) {
         }
         else {
             if (this.dungeonMap.player.hp <= 0) {
-                this.dungeonMap.gameResults = dungeon_1.GameResults.lost;
+                this.dungeonMap.gameStatus = dungeon_1.GameStatus.lost;
                 doMove = false;
             }
             else if (doMove) {
+                this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
                 if (tile instanceof Entities.Monster && tile.isBoss) {
-                    this.dungeonMap.gameResults = dungeon_1.GameResults.won;
+                    this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
                     doMove = false;
                 }
             }
@@ -193,18 +222,26 @@ var DungeonGame = (function (_super) {
     DungeonGame.prototype.render = function () {
         var instructions = (React.createElement("ul", null,
             React.createElement("li", null, "Use arrow keys to move."),
+            React.createElement("li", null, "To obtain an item or attack a monster, move over the square."),
             React.createElement("li", null, "Hover over squares to see their properties."),
-            React.createElement("li", null, "Defeat boss in level 20")));
+            React.createElement("li", null, "Defeat boss in level 20.")));
         debugger;
+        var playAgainButton = React.createElement("button", { className: "btn btn-default", onClick: this.reset }, "Play again?");
         return (React.createElement("div", null,
             React.createElement("div", { className: "table-row" },
                 React.createElement("div", { className: "table-cell info-panels" },
                     React.createElement(InfoPanel, { header: "Instructions", rows: instructions }),
                     React.createElement(Legend, null)),
-                React.createElement("div", { className: "table-cell map-paper" },
-                    React.createElement("h1", null, "Rougelike React Game"),
-                    React.createElement("div", { className: "map" },
-                        React.createElement(Dungeon, { tileMap: this.state.dungeon.tileMap, player: this.state.dungeon.player }))),
+                React.createElement("div", { className: "table-cell map" }, this.state.dungeon.gameStatus === dungeon_1.GameStatus.in_progress ?
+                    React.createElement(Dungeon, { tileMap: this.state.dungeon.tileMap, player: this.state.dungeon.player })
+                    : this.state.dungeon.gameStatus === dungeon_1.GameStatus.won ?
+                        React.createElement("div", null,
+                            React.createElement("div", { id: "won", className: "gameResult" }),
+                            playAgainButton)
+                        : this.state.dungeon.gameStatus == dungeon_1.GameStatus.lost ?
+                            React.createElement("div", null,
+                                React.createElement("div", { id: "lost", className: "gameResult" }),
+                                playAgainButton) : ""),
                 React.createElement("div", { className: "table-cell info-panels" },
                     React.createElement(UserInfo, { player: this.state.dungeon.player, dungeonLevel: this.state.dungeon.level }),
                     React.createElement(OpponentInfo, { monster: this.state.dungeon.currentOpponent, player: this.state.dungeon.player })))));
