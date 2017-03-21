@@ -142,7 +142,7 @@ export class Map
 
     rooms:Room[];
     roomTree:Tree;
-    level: number = 20;
+    level: number = 1;
     gameStatus: GameStatus;
 
     weapon:Dungeon.Weapon;

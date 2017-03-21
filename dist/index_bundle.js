@@ -7439,7 +7439,7 @@ var GameStatus;
 var Map = (function () {
     function Map() {
         this.N_ITERATIONS = 3;
-        this.level = 20;
+        this.level = 1;
     }
     Map.prototype.generate = function () {
         this.rooms = [];
