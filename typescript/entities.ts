@@ -170,7 +170,7 @@ You start at level 1 and can reach a maximum level of 30.
 
 	constructor() {
 		super("You", 0, 1);		
-		this.weapon = new Weapon("1d6", "Stick", 1);
+		this.weapon = new Weapon("1d2", "Stick", 1);
         
 		this.className = "player";
 		this.hp = 12;		

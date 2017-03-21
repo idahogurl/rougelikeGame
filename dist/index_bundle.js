@@ -4949,7 +4949,7 @@ var Player = (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, "You", 0, 1) || this;
-        _this.weapon = new Weapon("1d6", "Stick", 1);
+        _this.weapon = new Weapon("1d2", "Stick", 1);
         _this.className = "player";
         _this.hp = 12;
         _this.experinceLevels = [
