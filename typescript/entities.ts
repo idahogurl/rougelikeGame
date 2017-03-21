@@ -170,10 +170,10 @@ You start at level 1 and can reach a maximum level of 30.
 
 	constructor() {
 		super("You", 0, 1);		
-		this.weapon = new Weapon("5d20", "Stick", 5);
+		this.weapon = new Weapon("1d6", "Stick", 1);
         
 		this.className = "player";
-		this.hp = 500;		
+		this.hp = 12;		
 		this.experinceLevels = [
 			0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
 			1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
