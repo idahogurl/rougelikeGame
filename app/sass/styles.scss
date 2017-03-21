@@ -1,6 +1,10 @@
+@font-face {
+    font-family: "Matura";
+    src: url("../images/MATURASC.ttf");
+}
 body
 {
-    background-image: url("../images/concrete_surface.jpg");
+    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/concrete_surface_zps0hvol61a.jpg");
     margin-top: 20px;
     font-size: 12pt;
 }
@@ -28,7 +32,7 @@ label
     vertical-align: middle;    
 }
 h1 {
-    font: 60pt "Jim Nightshade";
+    font: 50pt "Matura";
     text-align: center;     
     text-shadow: rgb(224, 224, 224) 1px 1px 0px;   
 }
@@ -56,21 +60,21 @@ h1 {
 .info-header
 {
     text-align: center;
-    font: 24pt "Jim Nightshade";
+    font: 20pt "Matura";
 }
 .scroll-top
 {
-    background-image: url('../images/scrollTop.png');
+    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollTop_zps9ey6ac6t.png");
     width:52px;
 }
 .scroll-end
 {
-    background-image: url('../images/scrollEnd.png');
+    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollEnd_zps7pwyot4g.png");
     width:56px;
 }
 .scroll-body
 {
-    background-image: url('../images/scrollBody.png');
+    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollBody_zpsvjwkwc2k.png");
     width: 268px;
     height: 293px;
     background-position: center;
@@ -78,19 +82,19 @@ h1 {
 }
 
 .gameResult {
-    height: 170px;
+    height: 513px;
     width: 600px;
    
     &#won {
-        background-image: url('../images/won.png');
+        background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/won_zpsa9b8lorg.png");
     }
     &#lost {
-        background-image: url('../images/lost.png');       
+        background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/lost_zpsikkdwawz.png");       
     }
 }
 .board-row {
     @extend .table-row;
-    height: 12px;
+    height: 12px; 
 }
 .map {
     text-align: center;

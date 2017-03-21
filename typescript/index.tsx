@@ -156,14 +156,16 @@ class DungeonGame extends Component<any,any>
         super();
 
         this.reset = this.reset.bind(this);
-        this.reset();
+        this.reset(null);
 
         this.move = this.move.bind(this);
         this.state = { dungeon: this.dungeonMap };
     }
-    reset() {
+    reset(e) {
+        
         this.dungeonMap = new Map();
-        this.dungeonMap.generate();
+        this.dungeonMap.generate();        
+        if (e !== null) this.setState({dungeon: this.dungeonMap});
     }
     move(e)
     {
@@ -194,7 +196,7 @@ class DungeonGame extends Component<any,any>
         if (tile instanceof Entities.Stairs)
         {
             this.dungeonMap.level++;
-            this.dungeonMap.generate();            
+            this.dungeonMap.generate();
         }
         else
         {  
@@ -204,7 +206,7 @@ class DungeonGame extends Component<any,any>
                 doMove = false;
             }
             else if (doMove) {
-                this.dungeonMap.gameStatus = GameStatus.won;
+                
                 if (tile instanceof Entities.Monster && (tile as Entities.Monster).isBoss)
                 {
                     this.dungeonMap.gameStatus = GameStatus.won;

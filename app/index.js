@@ -151,14 +151,16 @@ var DungeonGame = (function (_super) {
     function DungeonGame() {
         var _this = _super.call(this) || this;
         _this.reset = _this.reset.bind(_this);
-        _this.reset();
+        _this.reset(null);
         _this.move = _this.move.bind(_this);
         _this.state = { dungeon: _this.dungeonMap };
         return _this;
     }
-    DungeonGame.prototype.reset = function () {
+    DungeonGame.prototype.reset = function (e) {
         this.dungeonMap = new dungeon_1.Map();
         this.dungeonMap.generate();
+        if (e !== null)
+            this.setState({ dungeon: this.dungeonMap });
     };
     DungeonGame.prototype.move = function (e) {
         var x = this.dungeonMap.player.location.x;
@@ -192,7 +194,6 @@ var DungeonGame = (function (_super) {
                 doMove = false;
             }
             else if (doMove) {
-                this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
                 if (tile instanceof Entities.Monster && tile.isBoss) {
                     this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
                     doMove = false;

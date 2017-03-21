@@ -31,7 +31,7 @@ var ParallelUglifyPluginConfig = new ParallelUglifyPlugin({
               loader: "typescript-loader"
             },
             {
-              test: /\.png|\.jpg$/,
+              test: /\.png|\.jpg|\.ttf$/,
               loader: "file-loader"
             }
     ]
