@@ -39,7 +39,6 @@ var InfoPanel = (function (_super) {
     }
     InfoPanel.prototype.render = function () {
         var rows = this.props.rows;
-        debugger;
         var i = 0;
         if (rows === undefined) {
             rows = this.props.info.map(function (c) {
@@ -61,9 +60,6 @@ var InfoPanel = (function (_super) {
                         rows)),
                 React.createElement("div", { className: "scroll-end table-cell" }))));
     };
-    InfoPanel.prototype.shouldComponentUpdate = function (nextProps, nextState) {
-        return this.props.rows != nextProps.rows;
-    };
     return InfoPanel;
 }(react_1.Component));
 var OpponentInfo = (function (_super) {
@@ -71,15 +67,14 @@ var OpponentInfo = (function (_super) {
     function OpponentInfo() {
         return _super.apply(this, arguments) || this;
     }
-    OpponentInfo.prototype.shouldComponentUpdate = function (nextProps, nextState) {
-        return this.props.player != nextProps.player;
-    };
     OpponentInfo.prototype.render = function () {
-        debugger;
         var info = [];
-        info.push({ label: "Damage Dealt", val: !this.props.player.weapon.damage ? "Not Started" : this.props.player.weapon.damage });
-        info.push({ label: "Damage Taken", val: !this.props.player.damageTaken ? "Not Started" : this.props.player.damageTaken });
-        info.push({ label: "Monster Health", val: !this.props.monster ? "Not Started" : this.props.monster.hp < 0 ? 0 : this.props.monster.hp });
+        info.push({ label: "Damage Dealt",
+            val: this.props.player.weapon.damage === -1 ? "Not Started" : this.props.player.weapon.damage });
+        info.push({ label: "Damage Taken",
+            val: this.props.player.damageTaken === -1 ? "Not Started" : this.props.player.damageTaken });
+        info.push({ label: "Monster Health",
+            val: this.props.hp === -1 ? "Not Started" : this.props.hp < 0 ? 0 : this.props.hp });
         return (React.createElement(InfoPanel, { header: "Battle", info: info }));
     };
     return OpponentInfo;
@@ -89,14 +84,11 @@ var UserInfo = (function (_super) {
     function UserInfo() {
         return _super.apply(this, arguments) || this;
     }
-    UserInfo.prototype.shouldComponentUpdate = function (nextProps, nextState) {
-        return this.props.player != nextProps.player;
-    };
     UserInfo.prototype.render = function () {
         var info = [];
         info.push({ label: "Dungeon", val: this.props.dungeonLevel });
         info.push({ label: "XP Level", val: this.props.player.level });
-        info.push({ label: "Health", val: this.props.player.hp });
+        info.push({ label: "Health", val: this.props.player.hp < 0 ? 0 : this.props.player.hp });
         info.push({ label: "Weapon", val: this.props.player.weapon.name + " (" + this.props.player.weapon.damageRoll + ")" });
         return (React.createElement(InfoPanel, { header: "Player", info: info }));
     };
@@ -167,7 +159,6 @@ var DungeonGame = (function (_super) {
         var y = this.dungeonMap.player.location.y;
         var newX = x;
         var newY = y;
-        debugger;
         switch (e.keyCode) {
             case 38:
                 newY--;
@@ -186,22 +177,19 @@ var DungeonGame = (function (_super) {
         var doMove = tile.interact(this.dungeonMap.player);
         if (tile instanceof Entities.Stairs) {
             this.dungeonMap.level++;
+            var currentOpponentHp = this.dungeonMap.currentOpponentHp; //keep the previous battle information
             this.dungeonMap.generate();
+            this.dungeonMap.currentOpponentHp = currentOpponentHp;
         }
-        else {
-            if (this.dungeonMap.player.hp <= 0) {
-                this.dungeonMap.gameStatus = dungeon_1.GameStatus.lost;
+        else if (this.dungeonMap.player.hp <= 0) {
+            this.dungeonMap.gameStatus = dungeon_1.GameStatus.lost;
+        }
+        else if (tile instanceof Entities.Monster) {
+            var monster = tile;
+            this.dungeonMap.currentOpponentHp = monster.hp;
+            if (doMove && monster.isBoss) {
+                this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
                 doMove = false;
-            }
-            else if (doMove) {
-                if (tile instanceof Entities.Monster && tile.isBoss) {
-                    this.dungeonMap.gameStatus = dungeon_1.GameStatus.won;
-                    doMove = false;
-                }
-            }
-            else {
-                if (tile instanceof Entities.Monster)
-                    this.dungeonMap.currentOpponent = tile;
             }
         }
         if (doMove) {
@@ -223,11 +211,9 @@ var DungeonGame = (function (_super) {
     DungeonGame.prototype.render = function () {
         var instructions = (React.createElement("ul", null,
             React.createElement("li", null, "Use arrow keys to move."),
-            React.createElement("li", null, "To obtain an item or attack a monster, move over the square."),
-            React.createElement("li", null, "Hover over squares to see their properties."),
+            React.createElement("li", null, "To obtain an item or to attack a monster, move over the square."),
+            React.createElement("li", null, "Hover over a square to see its properties."),
             React.createElement("li", null, "Defeat boss in level 20.")));
-        debugger;
-        var playAgainButton = React.createElement("button", { className: "btn btn-default", onClick: this.reset }, "Play again?");
         return (React.createElement("div", null,
             React.createElement("div", { className: "table-row" },
                 React.createElement("div", { className: "table-cell info-panels" },
@@ -236,16 +222,12 @@ var DungeonGame = (function (_super) {
                 React.createElement("div", { className: "table-cell map" }, this.state.dungeon.gameStatus === dungeon_1.GameStatus.in_progress ?
                     React.createElement(Dungeon, { tileMap: this.state.dungeon.tileMap, player: this.state.dungeon.player })
                     : this.state.dungeon.gameStatus === dungeon_1.GameStatus.won ?
-                        React.createElement("div", null,
-                            React.createElement("div", { id: "won", className: "gameResult" }),
-                            playAgainButton)
+                        React.createElement("div", { id: "won", className: "gameResult", onClick: this.reset })
                         : this.state.dungeon.gameStatus == dungeon_1.GameStatus.lost ?
-                            React.createElement("div", null,
-                                React.createElement("div", { id: "lost", className: "gameResult" }),
-                                playAgainButton) : ""),
+                            React.createElement("div", { id: "lost", className: "gameResult", onClick: this.reset }) : ""),
                 React.createElement("div", { className: "table-cell info-panels" },
                     React.createElement(UserInfo, { player: this.state.dungeon.player, dungeonLevel: this.state.dungeon.level }),
-                    React.createElement(OpponentInfo, { monster: this.state.dungeon.currentOpponent, player: this.state.dungeon.player })))));
+                    React.createElement(OpponentInfo, { hp: this.state.dungeon.currentOpponentHp, player: this.state.dungeon.player })))));
     };
     return DungeonGame;
 }(react_1.Component));
@@ -289,7 +271,6 @@ var MapRow = (function (_super) {
     MapRow.prototype.render = function () {
         var _this = this;
         var j = 0;
-        //debugger;
         var cells = this.props.cells.map(function (cell) {
             j++;
             return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell });

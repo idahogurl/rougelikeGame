@@ -149,7 +149,7 @@ export class Map
     stairs:Dungeon.Entity;
     player:Dungeon.Player;
     tileMap:Dungeon.Entity[][];
-    currentOpponent: Dungeon.Monster;
+    currentOpponentHp: number;
     visibleTiles:string[];
 
     generate()
@@ -157,6 +157,7 @@ export class Map
         this.rooms = [];
         this.tileMap = new Array(TOTAL_MAP_SIZE);
         this.gameStatus = GameStatus.in_progress;
+        this.currentOpponentHp = -1;
 
         this.initTileMap();
 

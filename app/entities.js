@@ -128,10 +128,7 @@ var Monster = (function (_super) {
         this.tooltip = this.name + "\nHP: " + this.hp + "\nDamage: " + this.damageRoll;
     };
     Monster.prototype.interact = function (player) {
-        player.attack(this);
-        if (this.hp <= 0)
-            return true;
-        return false;
+        return player.attack(this);
     };
     return Monster;
 }(Creature));
@@ -143,10 +140,11 @@ var Player = (function (_super) {
         _this.weapon = new Weapon("1d2", "Stick", 1);
         _this.className = "player";
         _this.hp = 12;
-        _this.experinceLevels = [
+        _this.experienceLevels = [
             0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
             1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
         ];
+        _this.damageTaken = -1;
         _this.tooltip = _this.name;
         return _this;
     }
@@ -170,21 +168,28 @@ var Player = (function (_super) {
     };
     Player.prototype.attack = function (opponent) {
         //roll the dice
-        opponent.damage = Dice.roll(opponent.damageRoll);
         this.weapon.damage = Dice.roll(this.weapon.damageRoll) + this.getAttackBonus();
-        //add bonus points based on player's level
         opponent.hp -= this.weapon.damage;
+        opponent.damage = Dice.roll(opponent.damageRoll);
         this.damageTaken = opponent.damage;
         this.hp -= opponent.damage;
-        if (opponent.hp <= 0)
+        if (this.hp <= 0) {
+            this.hp = 0; //do not want to display a negative number
+            return false;
+        }
+        if (opponent.hp <= 0) {
+            opponent.hp = 0; //do not want to display a negative number
             this.gainXp(opponent.xp);
+            return true;
+        }
+        return false;
     };
     Player.prototype.gainXp = function (xp) {
         var _this = this;
         this.xp += xp;
         //increase level while level's xp is less than or equal to the player's xp
         var level = 0;
-        this.experinceLevels.forEach(function (l) {
+        this.experienceLevels.forEach(function (l) {
             if (l <= _this.xp) {
                 level++;
             }
@@ -221,10 +226,12 @@ var Weapon = (function (_super) {
         _this.damageRoll = damageRoll;
         _this.level = level;
         _this.className = "weapon";
+        _this.damage = -1;
         _this.tooltip = _this.name + "\nDamage: " + _this.damageRoll;
         return _this;
     }
     Weapon.prototype.interact = function (player) {
+        this.damage = player.weapon.damage; //keep damage from previous battle
         player.weapon = this;
         return true;
     };
@@ -240,7 +247,7 @@ var Stairs = (function (_super) {
         return _this;
     }
     Stairs.prototype.interact = function () {
-        return true;
+        return false;
     };
     return Stairs;
 }(Entity));

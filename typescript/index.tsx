@@ -35,7 +35,6 @@ class InfoPanel extends Component<any,any>
     render()
     {
         let rows = this.props.rows;
-        debugger;
         let i = 0;
         if (rows === undefined)
         {
@@ -63,39 +62,31 @@ class InfoPanel extends Component<any,any>
                 </div>
                 </div>);
     }
-    shouldComponentUpdate(nextProps, nextState) {
-        return this.props.rows != nextProps.rows;
-    }
 }
 
 class OpponentInfo extends Component<any,any>
 {
-    shouldComponentUpdate(nextProps, nextState) {
-        return this.props.player != nextProps.player;
-    }
     render()
-    {
-        debugger;
+    {     
         let info = [];
-        info.push({ label: "Damage Dealt", val: !this.props.player.weapon.damage ? "Not Started" : this.props.player.weapon.damage });
-        info.push({ label: "Damage Taken", val: !this.props.player.damageTaken ? "Not Started" :  this.props.player.damageTaken});
-        info.push({ label: "Monster Health", val: !this.props.monster ? "Not Started" : this.props.monster.hp  < 0 ? 0 : this.props.monster.hp });
+        info.push({ label: "Damage Dealt", 
+            val: this.props.player.weapon.damage === -1 ? "Not Started" : this.props.player.weapon.damage });
+        info.push({ label: "Damage Taken", 
+            val: this.props.player.damageTaken === -1 ? "Not Started" :  this.props.player.damageTaken});
+        info.push({ label: "Monster Health", 
+            val: this.props.hp === -1 ? "Not Started" : this.props.hp < 0 ? 0 : this.props.hp });
         return (
-            <InfoPanel header="Battle" info={info}/>
-                          
+            <InfoPanel header="Battle" info={info}/>                
         );
     }    
 }
 class UserInfo extends Component<any,any> 
 {
-    shouldComponentUpdate(nextProps, nextState) {
-        return this.props.player != nextProps.player;
-    }
     render() {
         let info = [];
         info.push({label: "Dungeon", val: this.props.dungeonLevel });
         info.push({label: "XP Level", val: this.props.player.level });
-        info.push({label: "Health", val: this.props.player.hp });
+        info.push({label: "Health", val: this.props.player.hp < 0 ? 0 : this.props.player.hp });
         info.push({label: "Weapon", val: this.props.player.weapon.name + " (" + this.props.player.weapon.damageRoll +")" });
         
         return (
@@ -162,9 +153,8 @@ class DungeonGame extends Component<any,any>
         this.state = { dungeon: this.dungeonMap };
     }
     reset(e) {
-        
         this.dungeonMap = new Map();
-        this.dungeonMap.generate();        
+        this.dungeonMap.generate();
         if (e !== null) this.setState({dungeon: this.dungeonMap});
     }
     move(e)
@@ -174,7 +164,7 @@ class DungeonGame extends Component<any,any>
 
         let newX = x;
         let newY = y;
-        debugger;
+
         switch(e.keyCode) {
             case 38:
                 newY--;
@@ -196,27 +186,24 @@ class DungeonGame extends Component<any,any>
         if (tile instanceof Entities.Stairs)
         {
             this.dungeonMap.level++;
+        
+            let currentOpponentHp = this.dungeonMap.currentOpponentHp; //keep the previous battle information
             this.dungeonMap.generate();
+            this.dungeonMap.currentOpponentHp = currentOpponentHp;
         }
-        else
-        {  
-            if (this.dungeonMap.player.hp <= 0) 
+        else if (this.dungeonMap.player.hp <= 0) //player died
+        {
+            this.dungeonMap.gameStatus = GameStatus.lost;
+        }
+        else if (tile instanceof Entities.Monster)
+        {
+            let monster = tile as Entities.Monster;
+            this.dungeonMap.currentOpponentHp = monster.hp;
+            
+            if (doMove && monster.isBoss) //boss defeated
             {
-                this.dungeonMap.gameStatus = GameStatus.lost;
-                doMove = false;
-            }
-            else if (doMove) {
-                
-                if (tile instanceof Entities.Monster && (tile as Entities.Monster).isBoss)
-                {
-                    this.dungeonMap.gameStatus = GameStatus.won;
-                    doMove = false;                
-                }
-            } 
-            else
-            {
-                if (tile instanceof Entities.Monster) 
-                    this.dungeonMap.currentOpponent = tile as Entities.Monster;
+                this.dungeonMap.gameStatus = GameStatus.won;
+                doMove = false;      
             }
         }
 
@@ -244,12 +231,11 @@ class DungeonGame extends Component<any,any>
     {
         let instructions = (<ul>
             <li>Use arrow keys to move.</li>
-            <li>To obtain an item or attack a monster, move over the square.</li>
-            <li>Hover over squares to see their properties.</li>
+            <li>To obtain an item or to attack a monster, move over the square.</li>
+            <li>Hover over a square to see its properties.</li>
             <li>Defeat boss in level 20.</li>
             </ul>);
-        debugger;
-        let playAgainButton = <button className="btn btn-default" onClick={this.reset}>Play again?</button>;
+        
         return (
             <div>
                 <div className="table-row">
@@ -262,14 +248,14 @@ class DungeonGame extends Component<any,any>
                             {this.state.dungeon.gameStatus === GameStatus.in_progress ?
                                 <Dungeon tileMap={this.state.dungeon.tileMap} player={this.state.dungeon.player}/>
                                 : this.state.dungeon.gameStatus === GameStatus.won ? 
-                                    <div><div id="won" className="gameResult"/>{playAgainButton}</div>
+                                    <div id="won" className="gameResult" onClick={this.reset}/>
                                     :  this.state.dungeon.gameStatus == GameStatus.lost ?
-                                       <div><div id="lost" className="gameResult"></div>{playAgainButton}</div> : ""}
+                                    <div id="lost" className="gameResult" onClick={this.reset}></div> : ""}
                         
                     </div>
                     <div className="table-cell info-panels">
                             <UserInfo player={this.state.dungeon.player} dungeonLevel={this.state.dungeon.level} />
-                            <OpponentInfo monster={this.state.dungeon.currentOpponent} player={this.state.dungeon.player}/>
+                            <OpponentInfo hp={this.state.dungeon.currentOpponentHp} player={this.state.dungeon.player}/>
                     </div>
                 </div>                
             </div>
@@ -309,7 +295,7 @@ class MapCell extends Component<any,any> {
 class MapRow extends Component<any,any> {
     render() {
         let j: number = 0;
-        //debugger;
+        
         let cells = this.props.cells.map(cell =>  { 
             j++;
             return <MapCell key={this.props.rowNumber + "_" + j} tile={cell} />; 

@@ -119,6 +119,7 @@ var Map = (function () {
         this.rooms = [];
         this.tileMap = new Array(TOTAL_MAP_SIZE);
         this.gameStatus = GameStatus.in_progress;
+        this.currentOpponentHp = -1;
         this.initTileMap();
         var main_room = new RoomContainer(0, 0, MAP_SIZE, MAP_SIZE);
         this.roomTree = this.split_room(main_room, this.N_ITERATIONS);

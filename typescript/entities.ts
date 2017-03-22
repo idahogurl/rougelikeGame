@@ -151,11 +151,7 @@ export class Monster extends Creature {
 	}
 	interact(player:Player):boolean
 	{
-		player.attack(this);
-		
-		if (this.hp <= 0) return true;
-		
-		return false;
+		return player.attack(this);
 	}
 }
 export class Player extends Creature {
@@ -163,7 +159,7 @@ export class Player extends Creature {
 You start at level 1 and can reach a maximum level of 30.
 */
 
-	experinceLevels: number[];
+	experienceLevels: number[];
 	weapon:Weapon;
 	location: Point;
 	damageTaken: number;
@@ -174,10 +170,11 @@ You start at level 1 and can reach a maximum level of 30.
         
 		this.className = "player";
 		this.hp = 12;		
-		this.experinceLevels = [
+		this.experienceLevels = [
 			0, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10000, 20000, 40000, 80000, 160000, 320000, 640000,
 			1280000, 2560000, 5120000, 10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000, 100000000
 		];
+		this.damageTaken = -1;
 
 		this.tooltip = this.name;
 	}
@@ -199,23 +196,34 @@ You start at level 1 and can reach a maximum level of 30.
 	attack(opponent: Monster) 
     {
         //roll the dice
-        opponent.damage = Dice.roll(opponent.damageRoll);
-        
-		this.weapon.damage = Dice.roll(this.weapon.damageRoll) + this.getAttackBonus();
-		//add bonus points based on player's level
-
-        opponent.hp -= this.weapon.damage;
-		this.damageTaken = opponent.damage;
+        this.weapon.damage = Dice.roll(this.weapon.damageRoll) + this.getAttackBonus();
+		
+		opponent.hp -= this.weapon.damage;
+       	
+		opponent.damage = Dice.roll(opponent.damageRoll);
+        this.damageTaken = opponent.damage;
         this.hp -= opponent.damage;
-
-		if (opponent.hp <= 0) this.gainXp(opponent.xp);
+		
+		if (this.hp <= 0) 
+		{
+			this.hp = 0; //do not want to display a negative number
+			return false;
+		}
+		
+		if (opponent.hp <= 0) 
+		{
+			opponent.hp = 0; //do not want to display a negative number
+			this.gainXp(opponent.xp);
+			return true;
+		}
+		return false;
     }
 	gainXp(xp:number) {
 		this.xp += xp;
 
 		//increase level while level's xp is less than or equal to the player's xp
 		let level = 0;
-		this.experinceLevels.forEach(l => {
+		this.experienceLevels.forEach(l => {
 			if (l <= this.xp) {
 				level++;
 			}
@@ -261,11 +269,13 @@ export class Weapon extends Entity
         this.damageRoll = damageRoll;		
 		this.level = level;
 		this.className = "weapon";
+		this.damage = -1;
 
 		this.tooltip = this.name + "\nDamage: " + this.damageRoll;
     }
 	interact(player:Player):boolean
 	{
+		this.damage = player.weapon.damage; //keep damage from previous battle
 		player.weapon = this;
 		return true;
 	}
@@ -280,7 +290,7 @@ export class Stairs extends Entity
 	}
 	interact():boolean
 	{
-		return true;
+		return false;
 	}
 }
 export class Empty extends Entity
