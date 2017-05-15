@@ -272,6 +272,8 @@ var MapRow = (function (_super) {
         var _this = this;
         var j = 0;
         var cells = this.props.cells.map(function (cell) {
+            if (cell.className == "stairs")
+                console.log("Stairs: " + _this.props.rowNumber + "," + j);
             j++;
             return React.createElement(MapCell, { key: _this.props.rowNumber + "_" + j, tile: cell });
         });

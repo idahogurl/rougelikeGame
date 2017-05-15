@@ -297,6 +297,7 @@ class MapRow extends Component<any,any> {
         let j: number = 0;
         
         let cells = this.props.cells.map(cell =>  { 
+            if (cell.className == "stairs") console.log("Stairs: " + this.props.rowNumber + "," + j);
             j++;
             return <MapCell key={this.props.rowNumber + "_" + j} tile={cell} />; 
         });
