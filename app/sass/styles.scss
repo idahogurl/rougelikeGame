@@ -1,10 +1,10 @@
 @font-face {
     font-family: "Matura";
-    src: url("../images/MATURASC.ttf");
+    src: url("http://www.dynamicdiner.com/images/game/MATURASC.ttf");
 }
 body
 {
-    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/concrete_surface_zps0hvol61a.jpg");
+    background-image: url("http://www.dynamicdiner.com/images/game/concrete_surface.jpg");
     margin-top: 20px;
     font-size: 12pt;
 }
@@ -64,17 +64,17 @@ h1 {
 }
 .scroll-top
 {
-    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollTop_zps9ey6ac6t.png");
+    background-image: url("http://www.dynamicdiner.com/images/game/scrollTop.png");
     width:52px;
 }
 .scroll-end
 {
-    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollEnd_zps7pwyot4g.png");
+    background-image: url("http://www.dynamicdiner.com/images/game/scrollEnd.png");
     width:56px;
 }
 .scroll-body
 {
-    background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/scrollBody_zpsvjwkwc2k.png");
+    background-image: url("http://www.dynamicdiner.com/images/game/scrollBody.png");
     width: 268px;
     height: 293px;
     background-position: center;
@@ -86,10 +86,10 @@ h1 {
     width: 600px;
     cursor: pointer;
     &#won {
-        background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/won_zpsa9b8lorg.png");
+        background-image: url("http://www.dynamicdiner.com/images/game/won.png");
     }
     &#lost {
-        background-image: url("http://i373.photobucket.com/albums/oo177/idahogurl99/lost_zpsikkdwawz.png");       
+        background-image: url("http://www.dynamicdiner.com/images/game/lost.png");       
     }
 }
 .board-row {
