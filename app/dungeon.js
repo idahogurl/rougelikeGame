@@ -1,9 +1,18 @@
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+exports.__esModule = true;
 //https://eskerda.com/bsp-dungeon-generation/
 var MAP_SIZE = 50;
 var W_RATIO = 0.45;
@@ -13,7 +22,7 @@ var TOTAL_MAP_SIZE = 50; //to avoid boundary checks
 var Dungeon = require("./entities");
 var common_1 = require("./common");
 var Update = require("immutability-helper");
-var Room = (function () {
+var Room = /** @class */ (function () {
     function Room(x, y, w, h) {
         this.x = x;
         this.y = y;
@@ -67,7 +76,7 @@ var Room = (function () {
     };
     return Room;
 }());
-var RoomContainer = (function (_super) {
+var RoomContainer = /** @class */ (function (_super) {
     __extends(RoomContainer, _super);
     function RoomContainer(x, y, w, h) {
         return _super.call(this, x, y, w, h) || this;
@@ -85,7 +94,7 @@ var RoomContainer = (function (_super) {
     };
     return RoomContainer;
 }(Room));
-var Tree = (function () {
+var Tree = /** @class */ (function () {
     function Tree(leaf) {
         this.leaf = leaf;
     }
@@ -110,7 +119,7 @@ var GameStatus;
     GameStatus[GameStatus["lost"] = 1] = "lost";
     GameStatus[GameStatus["in_progress"] = 2] = "in_progress";
 })(GameStatus = exports.GameStatus || (exports.GameStatus = {}));
-var Map = (function () {
+var Map = /** @class */ (function () {
     function Map() {
         this.N_ITERATIONS = 3;
         this.level = 1;

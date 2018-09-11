@@ -8,6 +8,12 @@ body
     margin-top: 20px;
     font-size: 12pt;
 }
+
+.logo {
+    width: 300px;
+    margin-left: 40%;
+    margin-bottom: 20px;
+}
 .game-container
 {
     width: 1600px;
@@ -61,6 +67,7 @@ h1 {
 {
     text-align: center;
     font: 20pt "Matura";
+    text-transform: uppercase;
 }
 .scroll-top
 {
@@ -99,6 +106,7 @@ h1 {
 .map {
     text-align: center;
     vertical-align: top;
+    width: 700px;
 }
 .board-cell {
     @extend .table-cell;

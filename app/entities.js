@@ -1,11 +1,20 @@
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    }
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+exports.__esModule = true;
 var common_1 = require("./common");
-var WeaponFactory = (function () {
+var WeaponFactory = /** @class */ (function () {
     function WeaponFactory() {
     }
     WeaponFactory.get = function (level) {
@@ -21,7 +30,7 @@ var WeaponFactory = (function () {
     return WeaponFactory;
 }());
 exports.WeaponFactory = WeaponFactory;
-var MonsterFactory = (function () {
+var MonsterFactory = /** @class */ (function () {
     function MonsterFactory() {
         this.monsters = {
             1: [
@@ -96,7 +105,7 @@ var MonsterFactory = (function () {
     return MonsterFactory;
 }());
 exports.MonsterFactory = MonsterFactory;
-var Entity = (function () {
+var Entity = /** @class */ (function () {
     function Entity(name) {
         this.name = name;
         this.show = false;
@@ -104,7 +113,7 @@ var Entity = (function () {
     return Entity;
 }());
 exports.Entity = Entity;
-var Creature = (function (_super) {
+var Creature = /** @class */ (function (_super) {
     __extends(Creature, _super);
     function Creature(name, xp, level) {
         var _this = _super.call(this, name) || this;
@@ -114,7 +123,7 @@ var Creature = (function (_super) {
     }
     return Creature;
 }(Entity));
-var Monster = (function (_super) {
+var Monster = /** @class */ (function (_super) {
     __extends(Monster, _super);
     function Monster(name, xp, level, hpRoll, damageRoll) {
         var _this = _super.call(this, name, xp, level) || this;
@@ -133,7 +142,7 @@ var Monster = (function (_super) {
     return Monster;
 }(Creature));
 exports.Monster = Monster;
-var Player = (function (_super) {
+var Player = /** @class */ (function (_super) {
     __extends(Player, _super);
     function Player() {
         var _this = _super.call(this, "You", 0, 1) || this;
@@ -202,7 +211,7 @@ var Player = (function (_super) {
     return Player;
 }(Creature));
 exports.Player = Player;
-var HealthPotion = (function (_super) {
+var HealthPotion = /** @class */ (function (_super) {
     __extends(HealthPotion, _super);
     function HealthPotion() {
         var _this = _super.call(this, "Health Potion") || this;
@@ -219,7 +228,7 @@ var HealthPotion = (function (_super) {
     return HealthPotion;
 }(Entity));
 exports.HealthPotion = HealthPotion;
-var Weapon = (function (_super) {
+var Weapon = /** @class */ (function (_super) {
     __extends(Weapon, _super);
     function Weapon(damageRoll, name, level) {
         var _this = _super.call(this, name) || this;
@@ -238,7 +247,7 @@ var Weapon = (function (_super) {
     return Weapon;
 }(Entity));
 exports.Weapon = Weapon;
-var Stairs = (function (_super) {
+var Stairs = /** @class */ (function (_super) {
     __extends(Stairs, _super);
     function Stairs() {
         var _this = _super.call(this, null) || this;
@@ -252,7 +261,7 @@ var Stairs = (function (_super) {
     return Stairs;
 }(Entity));
 exports.Stairs = Stairs;
-var Empty = (function (_super) {
+var Empty = /** @class */ (function (_super) {
     __extends(Empty, _super);
     function Empty() {
         var _this = _super.call(this, null) || this;
@@ -265,7 +274,7 @@ var Empty = (function (_super) {
     return Empty;
 }(Entity));
 exports.Empty = Empty;
-var Floor = (function (_super) {
+var Floor = /** @class */ (function (_super) {
     __extends(Floor, _super);
     function Floor() {
         var _this = _super.call(this, null) || this;
@@ -278,7 +287,7 @@ var Floor = (function (_super) {
     return Floor;
 }(Entity));
 exports.Floor = Floor;
-var Dice = (function () {
+var Dice = /** @class */ (function () {
     function Dice() {
     }
     Dice.roll = function (value) {

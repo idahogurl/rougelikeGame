@@ -1,5 +1,6 @@
 "use strict";
-var Random = (function () {
+exports.__esModule = true;
+var Random = /** @class */ (function () {
     function Random() {
     }
     Random.next = function (min, max) {
@@ -8,7 +9,7 @@ var Random = (function () {
     return Random;
 }());
 exports.Random = Random;
-var Point = (function () {
+var Point = /** @class */ (function () {
     function Point(x, y) {
         this.x = x;
         this.y = y;
