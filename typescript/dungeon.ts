@@ -7,7 +7,7 @@ let TOTAL_MAP_SIZE = 50; //to avoid boundary checks
 
 import * as Dungeon from './entities';
 import {Random,Point} from './common';
-import * as Update from 'immutability-helper';
+import update from 'immutability-helper';
 
 class Room
 {
@@ -296,7 +296,7 @@ export class Map
             let x = point[0];
             let y = point[1];
             
-            this.tileMap[y][x] = Update(this.tileMap[y][x], {show: { $set: false }});
+            this.tileMap[y][x] = update(this.tileMap[y][x], {show: { $set: false }});
         });
     }
     isInBounds(x:number, y:number)
@@ -319,7 +319,7 @@ export class Map
             {
                 if (this.isInBounds(x, y))
                 {
-                    this.tileMap[y][x] = Update(this.tileMap[y][x], {show: { $set: true }});
+                    this.tileMap[y][x] = update(this.tileMap[y][x], {show: { $set: true }});
                     this.visibleTiles.push(x + "," + y);
                 }
             }
@@ -337,14 +337,14 @@ export class Map
             for (let x = x1; x < x1 + w; x++) {
                 if (this.isInBounds(x, y1))
                 {
-                    this.tileMap[y1][x] = Update(this.tileMap[y1][x], {show: { $set: true }});
+                    this.tileMap[y1][x] = update(this.tileMap[y1][x], {show: { $set: true }});
                     this.visibleTiles.push(x + "," + y1);
                 }
             }
             for (let x = x1; x < x1 + w; x++) {
                 if (this.isInBounds(x, y2))
                 {
-                    this.tileMap[y2][x] = Update(this.tileMap[y2][x], {show: { $set: true }});
+                    this.tileMap[y2][x] = update(this.tileMap[y2][x], {show: { $set: true }});
                     this.visibleTiles.push(x + "," + y2);
                 }
             }

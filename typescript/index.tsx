@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Map, GameStatus } from './dungeon';
+import { Map, GameStatus } from './dungeon'
 import * as Entities from './entities';
 
 import './sass/styles.scss';
