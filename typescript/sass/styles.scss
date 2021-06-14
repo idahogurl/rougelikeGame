@@ -1,7 +1,7 @@
 body
 {
     font-family: 'Jim Nightshade';
-    background-image: url("https://dynamicdiner.com/images/game/concrete_surface.jpg");
+    background-image: url("https://campdev.tech/images/game/concrete_surface.jpg");
     margin-top: 20px;
     font-size: 16pt;
 }
@@ -69,17 +69,17 @@ h1 {
 }
 .scroll-top
 {
-    background-image: url("https://dynamicdiner.com/images/game/scrollTop.png");
+    background-image: url("https://campdev.tech/images/game/scrollTop.png");
     width:52px;
 }
 .scroll-end
 {
-    background-image: url("https://dynamicdiner.com/images/game/scrollEnd.png");
+    background-image: url("https://campdev.tech/images/game/scrollEnd.png");
     width:56px;
 }
 .scroll-body
 {
-    background-image: url("https://dynamicdiner.com/images/game/scrollBody.png");
+    background-image: url("https://campdev.tech/images/game/scrollBody.png");
     width: 268px;
     height: 293px;
     background-position: center;
@@ -91,10 +91,10 @@ h1 {
     width: 600px;
     cursor: pointer;
     &#won {
-        background-image: url("https://dynamicdiner.com/images/game/won.png");
+        background-image: url("https://campdev.tech/images/game/won.png");
     }
     &#lost {
-        background-image: url("https://dynamicdiner.com/images/game/lost.png");       
+        background-image: url("https://campdev.tech/images/game/lost.png");       
     }
 }
 .board-row {

@@ -1,15 +1,19 @@
 {
   "name": "roguelike.game",
   "version": "1.0.0",
+  "main": "typescript/index.html",
+  "target": {
+    "main": false
+  },
   "author": {
     "name": "Rebecca Vest",
     "email": "olserebe@hotmail.com",
-    "url": "http://www.dynamicdiner.com"
+    "url": "http://www.campdev.tech"
   },
   "scripts": {
     "clean": "rm -rf dist",
     "start": "parcel typescript/index.html",
-    "build-prod": "parcel build typescript/index.html"
+    "build-prod": "parcel build typescript/index.html --dist-dir dist"
   },
   "dependencies": {
     "g": "^2.0.1",
@@ -19,9 +23,10 @@
     "react-dom": "^16.5.0"
   },
   "devDependencies": {
+    "@parcel/transformer-sass": "2.0.0-beta.2",
     "@types/react": "^16.4.14",
     "@types/react-dom": "^16.0.7",
-    "parcel": "^1.12.4",
+    "parcel": "^2.0.0-beta.2",
     "sass": "^1.23.7",
     "typescript": "^3.7.2"
   }
